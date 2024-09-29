@@ -22,16 +22,16 @@ class SpawnSettingsBase
 	float GarbageCollectionTimerInSeconds;
 	
 	//! Waypoint to use when groups spawn
-	ResourceName DefendWaypointPrefab;
+	string DefendWaypointPrefab;
 	
 	//! Waypoint to use when groups are set to attack
-	ResourceName AttackWaypointPrefab;
+	string AttackWaypointPrefab;
 	
 	//! Waypoint to use when creating patrol waypoints
-	ResourceName PatrolWaypointPrefab;
+	string PatrolWaypointPrefab;
 	
 	//! Waypoint to use when creating patrols
-	ResourceName CycleWaypointPrefab;
+	string CycleWaypointPrefab;
 	
 	//! Settings per faction
 	ref array<ref FactionSpawnSettings> FactionSettings;
@@ -101,8 +101,46 @@ class SpawnSettingsBase
 		factionSettings.AIWanderMaximumPercent = 0.2;
 		factionSettings.AIWanderMinimumPercent = 0.01;
 		factionSettings.ChanceToSpawn = 50;
+		factionSettings.Characters = {};
+		factionSettings.Groups = {};
+		factionSettings.Vehicles = {};
+		
+		SCR_EntityCatalog characterCatlaog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.CHARACTER);
+		SCR_EntityCatalog vehicleCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
+		SCR_EntityCatalog groupCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.GROUP);
+		
+		ref array<SCR_EntityCatalogEntry> entries = {};
+		if(characterCatlaog)
+		{
+			int amount = characterCatlaog.GetEntityList(entries);
+			InsertPrefabChanceFor(amount, entries, factionSettings.Characters);
+		}
+		
+		if(vehicleCatalog)
+		{
+			int amount = vehicleCatalog.GetEntityList(entries);
+			InsertPrefabChanceFor(amount, entries, factionSettings.Vehicles);
+		}
+		
+		if(groupCatalog)
+		{
+			int amount = groupCatalog.GetEntityList(entries);
+			InsertPrefabChanceFor(amount, entries, factionSettings.Groups);
+		}
 		
 		return factionSettings;
+	}
+	
+	private static void InsertPrefabChanceFor(int count, notnull array<SCR_EntityCatalogEntry> entries, notnull inout array<ref PrefabItemChance> items)
+	{
+		int defaultChance = 100/count;
+		foreach(SCR_EntityCatalogEntry entry : entries)
+		{
+			ref PrefabItemChance item = new PrefabItemChance();
+			item.PrefabName = entry.GetPrefab();
+			item.Chance = defaultChance;
+			items.Insert(item);
+		}
 	}
 	
 	private static void MergeFactionsInGame(notnull out array<ref FactionSpawnSettings> factions)
@@ -136,7 +174,7 @@ class SpawnSettingsBase
 	{
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
 		
-		settings.SetData("default", 2, 250, 5, 2, 150, 5.0);
+		settings.SetData("default", 2, 250, 3, 2, 150, 5.0);
 		
 		settings.CycleWaypointPrefab = "{35BD6541CBB8AC08}Prefabs/AI/Waypoints/AIWaypoint_Cycle.et";
 		settings.PatrolWaypointPrefab = "{22A875E30470BD4F}Prefabs/AI/Waypoints/AIWaypoint_Patrol.et";
@@ -198,6 +236,15 @@ class SpawnSettingsBase
 	}
 };
 
+class PrefabItemChance
+{
+	//! Path of prefab
+	string PrefabName;
+	
+	//! Value between 0 and 100
+	int Chance;
+}
+
 class FactionSpawnSettings
 {	
 	//! Key of faction in faction manager these values pertain to
@@ -219,5 +266,9 @@ class FactionSpawnSettings
 	float AIWanderMinimumPercent;
 	
 	//! Maximum percentage of units from faction that'll be assigned wander
-	float AIWanderMaximumPercent;		
+	float AIWanderMaximumPercent;
+	
+	ref array<ref PrefabItemChance> Characters;
+	ref array<ref PrefabItemChance> Vehicles;
+	ref array<ref PrefabItemChance> Groups;
 };

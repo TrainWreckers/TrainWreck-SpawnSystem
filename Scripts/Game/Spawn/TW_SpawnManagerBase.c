@@ -4,17 +4,45 @@ class FactionSpawnInfo
 	private ref array<ResourceName> m_Groups = {};
 	private ref array<ResourceName> m_Vehicles = {};
 	
-	void AddCharacter(ResourceName character) { m_Characters.Insert(character); }
-	void AddGroup(ResourceName group) { m_Groups.Insert(group); }
-	void AddVehicle(ResourceName vehicle) { m_Vehicles.Insert(vehicle); }
-		
-	ResourceName GetRandomCharacter() { return m_Characters.GetRandomElement(); }
-	ResourceName GetRandomGroup() { return m_Groups.GetRandomElement(); }
-	ResourceName GetRandomVehicle() { return m_Vehicles.GetRandomElement(); }
+	private ref array<float> m_CharacterChances = {};
+	private ref array<float> m_VehicleChances = {};
+	private ref array<float> m_GroupChances = {};
 	
-	array<ResourceName> GetCharacters() { return m_Characters; }
-	array<ResourceName> GetGroups() { return m_Groups; }
-	array<ResourceName> GetVehicles() { return m_Vehicles; }
+	void AddCharacter(PrefabItemChance item) 
+	{
+		m_Characters.Insert(item.PrefabName); 
+		m_CharacterChances.Insert(item.Chance);
+	}
+	
+	void AddGroup(PrefabItemChance item) 
+	{
+		m_Groups.Insert(item.PrefabName); 
+		m_GroupChances.Insert(item.Chance);
+	}
+	
+	void AddVehicle(PrefabItemChance item) 
+	{ 
+		m_Vehicles.Insert(item.PrefabName); 
+		m_VehicleChances.Insert(item.Chance);
+	}
+		
+	ResourceName GetRandomCharacter() 
+	{ 
+		int index = SCR_ArrayHelper.GetWeightedIndex(m_CharacterChances, Math.RandomFloat01());
+		return m_Characters.Get(index);
+	}
+	
+	ResourceName GetRandomGroup() 
+	{ 
+		int index = SCR_ArrayHelper.GetWeightedIndex(m_GroupChances, Math.RandomFloat01());
+		return m_Groups.Get(index);
+	}
+	
+	ResourceName GetRandomVehicle() 
+	{ 
+		int index = SCR_ArrayHelper.GetWeightedIndex(m_VehicleChances, Math.RandomFloat01());
+		return m_Vehicles.Get(index);
+	}
 };
 
 enum TW_AISpawnBehavior
@@ -46,6 +74,7 @@ class TW_SpawnManagerBase
 	protected ref map<string, ref FactionSpawnSettings> m_FactionSettings = new map<string, ref FactionSpawnSettings>();
 	protected ref array<string> m_EnabledFactions = {};
 	protected ref map<string, int> m_FactionCounts = new map<string, int>();
+	protected ref array<float> m_FactionChances = {};
 	
 	protected SCR_BaseGameMode m_GameMode;
 	
@@ -62,61 +91,48 @@ class TW_SpawnManagerBase
 		m_MaxTotalAgents = 0;
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
+		{
+			if(m_Spawnables.Contains(settings.FactionName))
+				continue;
+			
+			
+			FactionSpawnInfo spawnInfo = new FactionSpawnInfo();
+			
+			foreach(PrefabItemChance item : settings.Characters)
+				spawnInfo.AddCharacter(item);
+			foreach(PrefabItemChance item : settings.Vehicles)
+				spawnInfo.AddVehicle(item);
+			foreach(PrefabItemChance item : settings.Groups)
+				spawnInfo.AddGroup(item);
+			
+			m_Spawnables.Insert(settings.FactionName, spawnInfo);						
+		}
+		
+		FactionManager manager = GetGame().GetFactionManager();
+		
+		if(!manager)
+		{
+			Print("TrainWreck-SpawnSystem: Unable to initialize. FactionManager not found", LogLevel.ERROR);
+			return;
+		}
+		
+		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 			if(!m_FactionSettings.Contains(settings.FactionName) && settings.IsEnabled)
 			{
+				if(!manager.GetFactionByKey(settings.FactionName))
+				{
+					PrintFormat("TrainWreck-SpawnSystem: %1 - either mod not loaded, or faction not available in this scenario", settings.FactionName, LogLevel.WARNING);
+					continue;
+				}	
+			
 				m_FactionSettings.Insert(settings.FactionName, settings);
 				m_EnabledFactions.Insert(settings.FactionName);
 				m_MaxTotalAgents += settings.MaxAmount;
 			}
 		
 		m_GameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
-		LoadFactionCharacters();
+		
 		GetGame().GetCallqueue().CallLater(ReRegisterSpawnPointGrid, 2500, false);
-	}
-	
-	private void LoadFactionCharacters()
-	{
-		FactionManager manager = GetGame().GetFactionManager();
-		
-		ref array<Faction> entries = {};
-		manager.GetFactionsList(entries);
-		
-		foreach(Faction fac : entries)
-		{
-			SCR_Faction faction = SCR_Faction.Cast(fac);
-			
-			if(!faction)
-				continue;
-			
-			if(m_Spawnables.Contains(faction.GetFactionKey()))
-				continue;
-			
-			ref FactionSpawnInfo info = new FactionSpawnInfo();
-			
-			SCR_EntityCatalog characterCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.CHARACTER);
-			ref array<SCR_EntityCatalogEntry> items = {};
-			
-			characterCatalog.GetEntityList(items);
-			
-			foreach(SCR_EntityCatalogEntry entry : items)
-				info.AddCharacter(entry.GetPrefab());
-			
-			SCR_EntityCatalog groupCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.GROUP);
-			items.Clear();
-			groupCatalog.GetEntityList(items);
-			
-			foreach(SCR_EntityCatalogEntry entry : items)
-				info.AddGroup(entry.GetPrefab());
-			
-			SCR_EntityCatalog vehicleCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
-			items.Clear();
-			vehicleCatalog.GetEntityList(items);
-			
-			foreach(SCR_EntityCatalogEntry entry : items)
-				info.AddVehicle(entry.GetPrefab());
-			
-			m_Spawnables.Insert(faction.GetFactionKey(), info);
-		}
 	}
 	
 	void SpawnLoop()
@@ -162,7 +178,7 @@ class TW_SpawnManagerBase
 		return !m_AntiSpawnChunks.Contains(position);
 	}
 	
-	protected string GetRandomFactionToSpawn()
+	protected FactionKey GetRandomFactionToSpawn()
 	{
 		ref array<string> factions = new array<string>();
 		FactionSpawnSettings info;
@@ -170,28 +186,38 @@ class TW_SpawnManagerBase
 		if(m_FactionCounts.IsEmpty())
 		{
 			foreach(string faction : m_EnabledFactions)
+			{
+				PrintFormat("TrainWreck-SpawnSystem: Initializing Faction Counts %1", faction);
 				m_FactionCounts.Insert(faction, 0);
+			}
 			return m_EnabledFactions.GetRandomElement();
 		}
-			
+		
+		string text = "";
+		
 		foreach(string key, int amount : m_FactionCounts)
 		{
 			if(!m_FactionSettings.Contains(key))
+			{
+				PrintFormat("TrainWreck-SpawnSettings: Cannot find faciton settings for %1", key, LogLevel.WARNING);
 				continue;
+			}
 			
 			info = m_FactionSettings.Get(key);
+			text += string.Format("Faction(%1, %2/%3)\n", key, amount, info.MaxAmount);
+			
 			if(amount < info.MaxAmount)
 			{
-				factions.Insert(key);
+				factions.Insert(key);				
 			}
 		}
 		
 		int count = factions.Count();
-		
+		Print(text);
 		if(count > 0)
 			return factions.GetRandomElement();
 		
-		return string.Empty;		
+		return FactionKey.Empty;		
 	}
 	
 	protected void InvokeSpawnOn(int remainingCount)
@@ -218,11 +244,7 @@ class TW_SpawnManagerBase
 		string selectedFaction = GetRandomFactionToSpawn();
 		
 		if(!selectedFaction)
-		{
-			PrintFormat("TrainWreck-SpawnSettings: '%1' - Not valid faction", selectedFaction, LogLevel.ERROR);
-			GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, remainingCount);
 			return;
-		}
 		
 		TW_AISpawnBehavior behavior = m_Behaviors.GetRandomElement();
 		
@@ -251,10 +273,15 @@ class TW_SpawnManagerBase
 			
 			ref FactionSpawnInfo factionSettings = m_Spawnables.Get(selectedFaction);
 				
-			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetCharacters(), Math.RandomIntInclusive(1, 3));
+			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), 1);
 			
 			ResourceName waypoint = ResourceName.Empty;
 			vector position = group.GetOrigin();
+			
+			float differentBehaviorChance = Math.RandomFloat01();
+			
+			if(differentBehaviorChance < 60)
+				behavior = TW_AISpawnBehavior.DefendLocal;
 			
 			switch(behavior)
 			{
@@ -395,7 +422,9 @@ class TW_SpawnManagerBase
 	{
 		m_FactionGroups.Clear();
 		m_FactionAgents.Clear();
-		m_FactionCounts.Clear();
+		
+		foreach(string key, int amount : m_FactionCounts)
+			m_FactionCounts.Set(key, 0);
 		
 		ref array<AIAgent> worldAgents = {};
 		
