@@ -133,6 +133,8 @@ class SpawnSettingsBase
 	
 	private static void InsertPrefabChanceFor(int count, notnull array<SCR_EntityCatalogEntry> entries, notnull inout array<ref PrefabItemChance> items)
 	{
+		if(count <= 0) return;
+		
 		int defaultChance = 100/count;
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{

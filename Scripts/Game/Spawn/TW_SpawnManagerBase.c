@@ -83,18 +83,24 @@ class TW_SpawnManagerBase
 	private int m_MaxTotalAgents = 0;
 	private int m_SpawnQueueCount = 0;
 	private ref array<TW_AISpawnBehavior> m_Behaviors = {TW_AISpawnBehavior.DefendLocal, TW_AISpawnBehavior.DefendArea, TW_AISpawnBehavior.Attack, TW_AISpawnBehavior.Patrol};
-
+	
 	void Init()
 	{
 		s_Instance = this;
 		m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
+		
+		if(!m_SpawnSettings)
+		{
+			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
+			return;
+		}
+		
 		m_MaxTotalAgents = 0;
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 		{
 			if(m_Spawnables.Contains(settings.FactionName))
 				continue;
-			
 			
 			FactionSpawnInfo spawnInfo = new FactionSpawnInfo();
 			
