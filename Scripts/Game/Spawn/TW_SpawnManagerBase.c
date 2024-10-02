@@ -74,7 +74,10 @@ class TW_SpawnManagerBase
 	protected ref map<string, ref FactionSpawnSettings> m_FactionSettings = new map<string, ref FactionSpawnSettings>();
 	protected ref array<string> m_EnabledFactions = {};
 	protected ref map<string, int> m_FactionCounts = new map<string, int>();
-	protected ref array<float> m_FactionChances = {};
+	protected ref map<string, float> m_FactionChances = new map<string, float>();
+	
+	protected ref array<TW_AISpawnBehavior> m_Behaviors = {};
+	protected ref array<float> m_BehaviorChances = {};
 	
 	protected SCR_BaseGameMode m_GameMode;
 	
@@ -82,7 +85,6 @@ class TW_SpawnManagerBase
 	private bool isTrickleSpawning = false;
 	private int m_MaxTotalAgents = 0;
 	private int m_SpawnQueueCount = 0;
-	private ref array<TW_AISpawnBehavior> m_Behaviors = {TW_AISpawnBehavior.DefendLocal, TW_AISpawnBehavior.DefendArea, TW_AISpawnBehavior.Attack, TW_AISpawnBehavior.Patrol};
 	
 	void Init()
 	{
@@ -93,6 +95,30 @@ class TW_SpawnManagerBase
 		{
 			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
 			return;
+		}
+		
+		foreach(string behaviorName, float chance : m_SpawnSettings.Behaviors)
+		{
+			if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol))
+			{
+				m_Behaviors.Insert(TW_AISpawnBehavior.Patrol);
+				m_BehaviorChances.Insert(chance);
+			}
+			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal))
+			{
+				m_Behaviors.Insert(TW_AISpawnBehavior.DefendLocal);
+				m_BehaviorChances.Insert(chance);
+			}
+			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea))
+			{
+				m_Behaviors.Insert(TW_AISpawnBehavior.DefendArea);
+				m_BehaviorChances.Insert(chance);
+			}				
+			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack))
+			{
+				m_Behaviors.Insert(TW_AISpawnBehavior.Attack);
+				m_BehaviorChances.Insert(chance);
+			}
 		}
 		
 		m_MaxTotalAgents = 0;
@@ -110,6 +136,9 @@ class TW_SpawnManagerBase
 				spawnInfo.AddVehicle(item);
 			foreach(PrefabItemChance item : settings.Groups)
 				spawnInfo.AddGroup(item);
+			
+			if(!m_FactionSettings.Contains(settings.FactionName))
+				m_FactionChances.Insert(settings.FactionName, settings.ChanceToSpawn);
 			
 			m_Spawnables.Insert(settings.FactionName, spawnInfo);						
 		}
@@ -187,41 +216,45 @@ class TW_SpawnManagerBase
 	protected FactionKey GetRandomFactionToSpawn()
 	{
 		ref array<string> factions = new array<string>();
+		ref array<float> factionWeights = new array<float>();
+		
 		FactionSpawnSettings info;
 		
 		if(m_FactionCounts.IsEmpty())
 		{
-			foreach(string faction : m_EnabledFactions)
+			foreach(string faction, float weight : m_FactionChances)
 			{
-				PrintFormat("TrainWreck-SpawnSystem: Initializing Faction Counts %1", faction);
 				m_FactionCounts.Insert(faction, 0);
+				factionWeights.Insert(weight);
+				factions.Insert(faction);
 			}
-			return m_EnabledFactions.GetRandomElement();
+			
+			int index = SCR_ArrayHelper.GetWeightedIndex(factionWeights, Math.RandomFloat01());
+			return factions.Get(index);
 		}
-		
-		string text = "";
 		
 		foreach(string key, int amount : m_FactionCounts)
 		{
 			if(!m_FactionSettings.Contains(key))
 			{
-				PrintFormat("TrainWreck-SpawnSettings: Cannot find faciton settings for %1", key, LogLevel.WARNING);
 				continue;
 			}
 			
 			info = m_FactionSettings.Get(key);
-			text += string.Format("Faction(%1, %2/%3)\n", key, amount, info.MaxAmount);
 			
 			if(amount < info.MaxAmount)
 			{
-				factions.Insert(key);				
+				factions.Insert(key);
+				factionWeights.Insert(m_FactionChances.Get(key));	
 			}
 		}
 		
 		int count = factions.Count();
-		Print(text);
 		if(count > 0)
-			return factions.GetRandomElement();
+		{
+			int index = SCR_ArrayHelper.GetWeightedIndex(factionWeights, Math.RandomFloat01());
+			return factions.Get(index);
+		}
 		
 		return FactionKey.Empty;		
 	}
@@ -251,29 +284,17 @@ class TW_SpawnManagerBase
 		
 		if(!selectedFaction)
 			return;
-		
-		TW_AISpawnBehavior behavior = m_Behaviors.GetRandomElement();
-		
+				
 		if(IsValidSpawn(spawnPoint))
 		{			
 			ref FactionSpawnSettings spawnSettings = m_FactionSettings.Get(selectedFaction);
 			
 			if(!spawnSettings)
 			{
-				PrintFormat("TrainWreck-SpawnSettings: %1 - Not valid faction", selectedFaction, LogLevel.ERROR);
 				GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, remainingCount);
 				return;
 			}
 			
-			float chanceToSpawn = Math.RandomIntInclusive(0, 100);
-			
-			// Unsuccessful roll to spawn.
-			if(chanceToSpawn > spawnSettings.ChanceToSpawn)
-			{
-				GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, remainingCount);
-				return;
-			}
-				
 			float tagAsWanderer = Math.RandomFloat01();
 			bool tag = tagAsWanderer < spawnSettings.AIWanderChance;
 			
@@ -281,57 +302,66 @@ class TW_SpawnManagerBase
 				
 			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), 1);
 			
-			ResourceName waypoint = ResourceName.Empty;
-			vector position = group.GetOrigin();
-			
-			float differentBehaviorChance = Math.RandomFloat01();
-			
-			if(differentBehaviorChance < 60)
-				behavior = TW_AISpawnBehavior.DefendLocal;
-			
-			switch(behavior)
-			{
-				case TW_AISpawnBehavior.Patrol:	
-				{
-					int waypointCount = Math.RandomIntInclusive(5, 15);
-					TW_Util.CreatePatrolPathFor(group, m_SpawnSettings.PatrolWaypointPrefab, m_SpawnSettings.CycleWaypointPrefab, waypointCount, Math.RandomFloat(150, 600));
-					break;
-				}
-				
-				case TW_AISpawnBehavior.Attack:
-				{
-					waypoint = m_SpawnSettings.AttackWaypointPrefab;
-					position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
-					break;
-				}
-				
-				case TW_AISpawnBehavior.DefendLocal:
-				{
-					waypoint = m_SpawnSettings.DefendWaypointPrefab;					
-					break;
-				}
-				
-				case TW_AISpawnBehavior.DefendArea:
-				{
-					waypoint = m_SpawnSettings.DefendWaypointPrefab;
-					position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
-					break;
-				}
-			}
-			
-			if(waypoint)
-			{
-				AIWaypoint point = TW_Util.CreateWaypointAt(waypoint, position);
-				group.AddWaypoint(point);
-			}
-			
-			if(!m_FactionCounts.Contains(selectedFaction))
-				m_FactionCounts.Insert(selectedFaction, group.GetAgentsCount());
-			else
-				m_FactionCounts.Set(selectedFaction, m_FactionCounts.Get(selectedFaction) + group.GetAgentsCount());
+			GetGame().GetCallqueue().CallLater(SetGroupWaypoint, 500, false, group);			
 		}
 		
 		GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, remainingCount);
+	}
+	
+	protected void SetGroupWaypoint(SCR_AIGroup group)
+	{
+		if(!group) return;
+		FactionKey selectedFaction = group.GetFaction().GetFactionKey();
+		int behaviorIndex = SCR_ArrayHelper.GetWeightedIndex(m_BehaviorChances, Math.RandomFloat01());
+		TW_AISpawnBehavior behavior = m_Behaviors.Get(behaviorIndex);
+		ResourceName waypoint = ResourceName.Empty;
+		vector position = group.GetOrigin();
+		
+		float differentBehaviorChance = Math.RandomFloat01();
+		
+		if(differentBehaviorChance < 60)
+			behavior = TW_AISpawnBehavior.DefendLocal;
+		
+		switch(behavior)
+		{
+			case TW_AISpawnBehavior.Patrol:	
+			{
+				int waypointCount = Math.RandomIntInclusive(5, 15);
+				TW_Util.CreatePatrolPathFor(group, m_SpawnSettings.PatrolWaypointPrefab, m_SpawnSettings.CycleWaypointPrefab, waypointCount, Math.RandomFloat(150, 600));
+				break;
+			}
+			
+			case TW_AISpawnBehavior.Attack:
+			{
+				waypoint = m_SpawnSettings.AttackWaypointPrefab;
+				position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
+				break;
+			}
+			
+			case TW_AISpawnBehavior.DefendLocal:
+			{
+				waypoint = m_SpawnSettings.DefendWaypointPrefab;					
+				break;
+			}
+			
+			case TW_AISpawnBehavior.DefendArea:
+			{
+				waypoint = m_SpawnSettings.DefendWaypointPrefab;
+				position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
+				break;
+			}
+		}
+		
+		if(waypoint)
+		{
+			AIWaypoint point = TW_Util.CreateWaypointAt(waypoint, position);
+			group.AddWaypoint(point);
+		}
+		
+		if(!m_FactionCounts.Contains(selectedFaction))
+			m_FactionCounts.Insert(selectedFaction, group.GetAgentsCount());
+		else
+			m_FactionCounts.Set(selectedFaction, m_FactionCounts.Get(selectedFaction) + group.GetAgentsCount());
 	}
 	
 	protected void OnPlayerChunksUpdated(GridUpdateEvent gridEvent)
@@ -342,6 +372,7 @@ class TW_SpawnManagerBase
 		m_PlayerChunks.Copy(gridEvent.GetPlayerChunks());
 		m_AntiSpawnChunks.Copy(gridEvent.GetAntiChunks());
 		
+		m_SpawnPointsNearPlayers.Clear();
 		TW_AISpawnPoint.GetSpawnPointsInChunks(m_PlayerChunks, m_SpawnPointsNearPlayers);
 	}
 	
@@ -415,8 +446,6 @@ class TW_SpawnManagerBase
 		
 		string faction = group.GetFaction().GetFactionKey();
 		
-		PrintFormat("TrainWreck-SpawnSystem: An agent has been removed from group: %1", faction);
-		
 		if(!m_FactionCounts.Contains(faction))
 			return;
 		
@@ -429,8 +458,11 @@ class TW_SpawnManagerBase
 		m_FactionGroups.Clear();
 		m_FactionAgents.Clear();
 		
-		foreach(string key, int amount : m_FactionCounts)
-			m_FactionCounts.Set(key, 0);
+		foreach(string key : m_EnabledFactions)
+			if(m_FactionCounts.Contains(key))
+				m_FactionCounts.Set(key, 0);
+			else
+				m_FactionCounts.Insert(key, 0);
 		
 		ref array<AIAgent> worldAgents = {};
 		

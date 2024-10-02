@@ -1,3 +1,9 @@
+class BehaviorSettings
+{
+	string BehaviorType;
+	int Chance;		
+};
+
 class SpawnSettingsBase
 {
 	//! Type of manager to use
@@ -33,8 +39,10 @@ class SpawnSettingsBase
 	//! Waypoint to use when creating patrols
 	string CycleWaypointPrefab;
 	
+	ref map<string, float> Behaviors;
+	
 	//! Settings per faction
-	ref array<ref FactionSpawnSettings> FactionSettings;
+	ref array<ref FactionSpawnSettings> FactionSettings;		
 	
 	void SetData(string type,
 				 int spawnTimer,
@@ -53,6 +61,7 @@ class SpawnSettingsBase
 		GarbageCollectionTimerInSeconds = gcTimer;
 		
 		FactionSettings = {};
+		Behaviors = new map<string, float>();
 	}
 	
 	void AddFaction(FactionSpawnSettings settings)
@@ -81,6 +90,7 @@ class SpawnSettingsBase
 		saveContext.WriteValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
 		saveContext.WriteValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
 		saveContext.WriteValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
+		saveContext.WriteValue("behaviors", settings.Behaviors);
 		saveContext.WriteValue("factions", settings.FactionSettings);
 		saveContext.WriteValue("defendWaypoint", settings.DefendWaypointPrefab);
 		saveContext.WriteValue("attackWaypoint", settings.AttackWaypointPrefab);
@@ -183,6 +193,11 @@ class SpawnSettingsBase
 		settings.DefendWaypointPrefab = "{2A81753527971941}Prefabs/AI/Waypoints/AIWaypoint_Defend_CP.et";
 		settings.AttackWaypointPrefab = "{1B0E3436C30FA211}Prefabs/AI/Waypoints/AIWaypoint_Attack.et";
 		
+		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol), 10);
+		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal), 80);
+		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack), 5);
+		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea), 5);
+		
 		FactionManager factionManager = GetGame().GetFactionManager();
 		
 		if(factionManager)
@@ -224,7 +239,8 @@ class SpawnSettingsBase
 		loadContext.ReadValue("spawnGridRadius", settings.SpawnGridRadius);
 		loadContext.ReadValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
 		loadContext.ReadValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
-		loadContext.ReadValue("factions", settings.FactionSettings);
+		loadContext.ReadValue("behaviors", settings.Behaviors);
+		loadContext.ReadValue("factions", settings.FactionSettings);		
 		loadContext.ReadValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
 		loadContext.ReadValue("defendWaypoint", settings.DefendWaypointPrefab);
 		loadContext.ReadValue("attackWaypoint", settings.AttackWaypointPrefab);
