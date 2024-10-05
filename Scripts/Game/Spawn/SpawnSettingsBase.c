@@ -39,7 +39,7 @@ class SpawnSettingsBase
 	//! Waypoint to use when creating patrols
 	string CycleWaypointPrefab;
 	
-	ref map<string, float> Behaviors;
+	int WanderIntervalInSeconds;		
 	
 	//! Settings per faction
 	ref array<ref FactionSpawnSettings> FactionSettings;		
@@ -59,9 +59,8 @@ class SpawnSettingsBase
 		AntiSpawnGridRadius = antiGridRadius;
 		AntiSpawnGridSize = antiGridSize;
 		GarbageCollectionTimerInSeconds = gcTimer;
-		
-		FactionSettings = {};
-		Behaviors = new map<string, float>();
+		WanderIntervalInSeconds = 60;
+		FactionSettings = {};		
 	}
 	
 	void AddFaction(FactionSpawnSettings settings)
@@ -90,12 +89,12 @@ class SpawnSettingsBase
 		saveContext.WriteValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
 		saveContext.WriteValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
 		saveContext.WriteValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
-		saveContext.WriteValue("behaviors", settings.Behaviors);
 		saveContext.WriteValue("factions", settings.FactionSettings);
 		saveContext.WriteValue("defendWaypoint", settings.DefendWaypointPrefab);
 		saveContext.WriteValue("attackWaypoint", settings.AttackWaypointPrefab);
 		saveContext.WriteValue("cycleWaypoint", settings.CycleWaypointPrefab);
 		saveContext.WriteValue("patrolWaypoint", settings.PatrolWaypointPrefab);
+		saveContext.WriteValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);
 				
 		return prettyContainer.SaveToFile(FILENAME);
 	}
@@ -108,12 +107,17 @@ class SpawnSettingsBase
 		factionSettings.MaxAmount = 30;
 		factionSettings.IsEnabled = true;
 		factionSettings.AIWanderChance = 0.25;
-		factionSettings.AIWanderMaximumPercent = 0.2;
-		factionSettings.AIWanderMinimumPercent = 0.01;
 		factionSettings.ChanceToSpawn = 50;
 		factionSettings.Characters = {};
 		factionSettings.Groups = {};
 		factionSettings.Vehicles = {};
+		
+		factionSettings.Behaviors = new map<string, float>();
+		
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol), 8);
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal), 90);
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack), 0);
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea), 2);
 		
 		SCR_EntityCatalog characterCatlaog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.CHARACTER);
 		SCR_EntityCatalog vehicleCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
@@ -193,11 +197,6 @@ class SpawnSettingsBase
 		settings.DefendWaypointPrefab = "{C0224D9332272F79}Prefabs/AI/Waypoints/TW_AIWaypoint_DefendSmall.et";
 		settings.AttackWaypointPrefab = "{1B0E3436C30FA211}Prefabs/AI/Waypoints/AIWaypoint_Attack.et";
 		
-		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol), 8);
-		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal), 90);
-		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack), 0);
-		settings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea), 2);
-		
 		FactionManager factionManager = GetGame().GetFactionManager();
 		
 		if(factionManager)
@@ -239,13 +238,13 @@ class SpawnSettingsBase
 		loadContext.ReadValue("spawnGridRadius", settings.SpawnGridRadius);
 		loadContext.ReadValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
 		loadContext.ReadValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
-		loadContext.ReadValue("behaviors", settings.Behaviors);
 		loadContext.ReadValue("factions", settings.FactionSettings);		
 		loadContext.ReadValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
 		loadContext.ReadValue("defendWaypoint", settings.DefendWaypointPrefab);
 		loadContext.ReadValue("attackWaypoint", settings.AttackWaypointPrefab);
 		loadContext.ReadValue("cycleWaypoint", settings.CycleWaypointPrefab);
 		loadContext.ReadValue("patrolWaypoint", settings.PatrolWaypointPrefab);
+		loadContext.ReadValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);
 		
 		MergeFactionsInGame(settings.FactionSettings);
 		SaveToFile(settings);
@@ -280,13 +279,9 @@ class FactionSpawnSettings
 	//! Chance the AI from this faction will randomly be told to wander
 	float AIWanderChance;
 	
-	//! Minimum percentage of units from faction that'll be assigned wander
-	float AIWanderMinimumPercent;
-	
-	//! Maximum percentage of units from faction that'll be assigned wander
-	float AIWanderMaximumPercent;
-	
 	ref array<ref PrefabItemChance> Characters;
 	ref array<ref PrefabItemChance> Vehicles;
 	ref array<ref PrefabItemChance> Groups;
+	
+	ref map<string, float> Behaviors;
 };

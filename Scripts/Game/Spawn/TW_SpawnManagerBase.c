@@ -45,6 +45,12 @@ class FactionSpawnInfo
 	}
 };
 
+class BehaviorWeights
+{
+	ref array<ref TW_AISpawnBehavior> Behaviors = {};
+	ref array<float> Weights = {};
+};
+
 enum TW_AISpawnBehavior
 {
 	DefendLocal,
@@ -76,8 +82,7 @@ class TW_SpawnManagerBase
 	protected ref map<string, int> m_FactionCounts = new map<string, int>();
 	protected ref map<string, float> m_FactionChances = new map<string, float>();
 	
-	protected ref array<TW_AISpawnBehavior> m_Behaviors = {};
-	protected ref array<float> m_BehaviorChances = {};
+	protected ref map<string, ref BehaviorWeights> m_FactionBehaviorWeights = new map<string, ref BehaviorWeights>();
 	
 	protected SCR_BaseGameMode m_GameMode;
 	
@@ -97,36 +102,41 @@ class TW_SpawnManagerBase
 			return;
 		}
 		
-		foreach(string behaviorName, float chance : m_SpawnSettings.Behaviors)
-		{
-			if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol))
-			{
-				m_Behaviors.Insert(TW_AISpawnBehavior.Patrol);
-				m_BehaviorChances.Insert(chance);
-			}
-			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal))
-			{
-				m_Behaviors.Insert(TW_AISpawnBehavior.DefendLocal);
-				m_BehaviorChances.Insert(chance);
-			}
-			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea))
-			{
-				m_Behaviors.Insert(TW_AISpawnBehavior.DefendArea);
-				m_BehaviorChances.Insert(chance);
-			}				
-			else if(behaviorName == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack))
-			{
-				m_Behaviors.Insert(TW_AISpawnBehavior.Attack);
-				m_BehaviorChances.Insert(chance);
-			}
-		}
-		
 		m_MaxTotalAgents = 0;
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 		{
 			if(m_Spawnables.Contains(settings.FactionName))
 				continue;
+			
+			ref BehaviorWeights behaviorWeights = new BehaviorWeights();
+			
+			foreach(string name, float chance : settings.Behaviors)
+			{
+				if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol))
+				{
+					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.Patrol);
+					behaviorWeights.Weights.Insert(chance);
+				}
+				else if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal))
+				{
+					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.DefendLocal);
+					behaviorWeights.Weights.Insert(chance);
+				}
+				else if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea))
+				{
+					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.DefendArea);
+					behaviorWeights.Weights.Insert(chance);
+				}
+				else if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack))
+				{
+					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.Attack);
+					behaviorWeights.Weights.Insert(chance);
+				}
+			}
+			
+			m_FactionBehaviorWeights.Insert(settings.FactionName, behaviorWeights);
+			
 			
 			FactionSpawnInfo spawnInfo = new FactionSpawnInfo();
 			
@@ -202,8 +212,48 @@ class TW_SpawnManagerBase
 		m_GameMode.GetOnPlayerPositionsUpdated().Insert(OnPlayerChunksUpdated);
 		TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
 		
+		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
+	}
+	
+	protected void WanderLoop()
+	{		
+		foreach(string faction, ref array<SCR_AIGroup> groups : m_FactionGroups)
+		{
+			if(!groups) continue;
+			
+			int count = groups.Count();
+			
+			for(int i = 0; i < count; i++)						
+			{
+				SCR_AIGroup group = groups.Get(i);
+				
+				if(!group)
+				{
+					groups.Remove(i);
+					i -= 1;
+					continue;		
+				}
+
+				if(!group.IsWanderer())
+					continue;
+				
+				TW_AISpawnPoint point = m_SpawnPointsNearPlayers.GetRandomElement();
+				GetGame().GetCallqueue().CallLater(CreateNewWaypointForGroup, i * 250, false, group, point);				
+			}
+		}
+	}
+	
+	private void CreateNewWaypointForGroup(SCR_AIGroup group, TW_AISpawnPoint point)
+	{
+		ref array<AIWaypoint> waypoints = {};
+		group.GetWaypoints(waypoints);
+		foreach(AIWaypoint waypoint : waypoints)
+			group.RemoveWaypoint(waypoint);
+		
+		AIWaypoint waypoint = TW_Util.CreateWaypointAt(m_SpawnSettings.DefendWaypointPrefab, point.GetOrigin());				
+		group.AddWaypoint(waypoint);
 	}
 	
 	protected bool IsValidSpawn(TW_AISpawnPoint spawnPoint)
@@ -301,6 +351,7 @@ class TW_SpawnManagerBase
 			ref FactionSpawnInfo factionSettings = m_Spawnables.Get(selectedFaction);
 				
 			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), 1);
+			group.SetWanderer(tag);
 			
 			GetGame().GetCallqueue().CallLater(SetGroupWaypoint, 500, false, group);			
 		}
@@ -312,15 +363,17 @@ class TW_SpawnManagerBase
 	{
 		if(!group) return;
 		FactionKey selectedFaction = group.GetFaction().GetFactionKey();
-		int behaviorIndex = SCR_ArrayHelper.GetWeightedIndex(m_BehaviorChances, Math.RandomFloat01());
-		TW_AISpawnBehavior behavior = m_Behaviors.Get(behaviorIndex);
+		
+		if(!m_FactionBehaviorWeights.Contains(selectedFaction))
+			return;
+		
+		ref BehaviorWeights weights = m_FactionBehaviorWeights.Get(selectedFaction);
+		
+		int behaviorIndex = SCR_ArrayHelper.GetWeightedIndex(weights.Weights, Math.RandomFloat01());
+		TW_AISpawnBehavior behavior = weights.Behaviors.Get(behaviorIndex);
+		
 		ResourceName waypoint = ResourceName.Empty;
 		vector position = group.GetOrigin();
-		
-		float differentBehaviorChance = Math.RandomFloat01();
-		
-		if(differentBehaviorChance < 60)
-			behavior = TW_AISpawnBehavior.DefendLocal;
 		
 		switch(behavior)
 		{
