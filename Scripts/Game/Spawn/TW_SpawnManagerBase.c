@@ -2,11 +2,12 @@ class FactionSpawnInfo
 {
 	private ref array<ResourceName> m_Characters = {};
 	private ref array<ResourceName> m_Groups = {};
-	private ref array<ResourceName> m_Vehicles = {};
 	
 	private ref array<float> m_CharacterChances = {};
-	private ref array<float> m_VehicleChances = {};
 	private ref array<float> m_GroupChances = {};
+	
+	private ref map<TW_VehicleType, ref array<ResourceName>> m_Vehicles = new map<TW_VehicleType, ref array<ResourceName>>();
+	private ref map<TW_VehicleType, ref array<float>> m_VehicleChances = new map<TW_VehicleType, ref array<float>>();
 	
 	void AddCharacter(PrefabItemChance item) 
 	{
@@ -20,10 +21,31 @@ class FactionSpawnInfo
 		m_GroupChances.Insert(item.Chance);
 	}
 	
-	void AddVehicle(PrefabItemChance item) 
+	void AddVehicle(VehicleItemChance item) 
 	{ 
-		m_Vehicles.Insert(item.PrefabName); 
-		m_VehicleChances.Insert(item.Chance);
+		TW_VehicleType type = FromString(item.VehicleType);
+		
+		if(m_Vehicles.Contains(type))
+		{
+			m_Vehicles.Get(type).Insert(item.PrefabName);
+			m_VehicleChances.Get(type).Insert(item.Chance);
+		}
+		else
+		{
+			m_Vehicles.Insert(type, {item.PrefabName});
+			m_VehicleChances.Insert(type, {item.Chance});
+		}
+	}
+	
+	TW_VehicleType FromString(string type)
+	{
+		if(type == SCR_Enum.GetEnumName(TW_VehicleType, TW_VehicleType.Air))
+			return TW_VehicleType.Air;
+		if(type == SCR_Enum.GetEnumName(TW_VehicleType, TW_VehicleType.Small))
+			return TW_VehicleType.Small;
+		if(type == SCR_Enum.GetEnumName(TW_VehicleType, TW_VehicleType.Medium))
+			return TW_VehicleType.Medium;
+		return TW_VehicleType.Large;
 	}
 		
 	ResourceName GetRandomCharacter() 
@@ -38,10 +60,13 @@ class FactionSpawnInfo
 		return m_Groups.Get(index);
 	}
 	
-	ResourceName GetRandomVehicle() 
+	ResourceName GetRandomVehicle(TW_VehicleType type) 
 	{ 
-		int index = SCR_ArrayHelper.GetWeightedIndex(m_VehicleChances, Math.RandomFloat01());
-		return m_Vehicles.Get(index);
+		if(!m_Vehicles.Contains(type))
+			return ResourceName.Empty;
+		
+		int index = SCR_ArrayHelper.GetWeightedIndex(m_VehicleChances.Get(type), Math.RandomFloat01());
+		return m_Vehicles.Get(type).Get(index);
 	}
 };
 
@@ -137,13 +162,15 @@ class TW_SpawnManagerBase
 			
 			m_FactionBehaviorWeights.Insert(settings.FactionName, behaviorWeights);
 			
-			
 			FactionSpawnInfo spawnInfo = new FactionSpawnInfo();
 			
 			foreach(PrefabItemChance item : settings.Characters)
 				spawnInfo.AddCharacter(item);
-			foreach(PrefabItemChance item : settings.Vehicles)
+			foreach(VehicleItemChance item : settings.Vehicles)
+			{
+				TW_Util.GetEntitySize(item.PrefabName);
 				spawnInfo.AddVehicle(item);
+			}
 			foreach(PrefabItemChance item : settings.Groups)
 				spawnInfo.AddGroup(item);
 			
@@ -211,6 +238,7 @@ class TW_SpawnManagerBase
 	{
 		m_GameMode.GetOnPlayerPositionsUpdated().Insert(OnPlayerChunksUpdated);
 		TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
+		TW_VehicleSpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
 		
 		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);

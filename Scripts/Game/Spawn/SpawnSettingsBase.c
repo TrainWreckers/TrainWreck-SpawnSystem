@@ -39,7 +39,7 @@ class SpawnSettingsBase
 	//! Waypoint to use when creating patrols
 	string CycleWaypointPrefab;
 	
-	int WanderIntervalInSeconds;		
+	int WanderIntervalInSeconds;
 	
 	//! Settings per faction
 	ref array<ref FactionSpawnSettings> FactionSettings;		
@@ -133,7 +133,7 @@ class SpawnSettingsBase
 		if(vehicleCatalog)
 		{
 			int amount = vehicleCatalog.GetEntityList(entries);
-			InsertPrefabChanceFor(amount, entries, factionSettings.Vehicles);
+			InsertVehiclePrefabChanceFor(amount, entries, factionSettings.Vehicles);
 		}
 		
 		if(groupCatalog)
@@ -155,6 +155,22 @@ class SpawnSettingsBase
 			ref PrefabItemChance item = new PrefabItemChance();
 			item.PrefabName = entry.GetPrefab();
 			item.Chance = defaultChance;
+			items.Insert(item);
+		}
+	}
+	
+	private static void InsertVehiclePrefabChanceFor(int count, notnull array<SCR_EntityCatalogEntry> entries, notnull inout array<ref VehicleItemChance> items)
+	{
+		if(count <= 0)
+			return;
+		
+		foreach(SCR_EntityCatalogEntry entry : entries)
+		{
+			ref VehicleItemChance item = new VehicleItemChance();
+			item.PrefabName = entry.GetPrefab();
+			item.Chance = 0;
+			
+			item.VehicleType = SCR_Enum.GetEnumName(TW_VehicleType, TW_VehicleType.Small);
 			items.Insert(item);
 		}
 	}
@@ -262,6 +278,11 @@ class PrefabItemChance
 	int Chance;
 }
 
+class VehicleItemChance : PrefabItemChance
+{
+	string VehicleType;
+}
+
 class FactionSpawnSettings
 {	
 	//! Key of faction in faction manager these values pertain to
@@ -280,7 +301,7 @@ class FactionSpawnSettings
 	float AIWanderChance;
 	
 	ref array<ref PrefabItemChance> Characters;
-	ref array<ref PrefabItemChance> Vehicles;
+	ref array<ref VehicleItemChance> Vehicles;
 	ref array<ref PrefabItemChance> Groups;
 	
 	ref map<string, float> Behaviors;
