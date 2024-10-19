@@ -105,9 +105,9 @@ class SpawnSettingsBase
 				
 		factionSettings.FactionName = faction.GetFactionKey();
 		factionSettings.MaxAmount = 30;
-		factionSettings.IsEnabled = true;
+		factionSettings.IsEnabled = false;
 		factionSettings.AIWanderChance = 0.25;
-		factionSettings.ChanceToSpawn = 50;
+		factionSettings.ChanceToSpawn = 0;
 		factionSettings.Characters = {};
 		factionSettings.Groups = {};
 		factionSettings.Vehicles = {};
@@ -149,7 +149,7 @@ class SpawnSettingsBase
 	{
 		if(count <= 0) return;
 		
-		int defaultChance = 100/count;
+		int defaultChance = 0;
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{
 			ref PrefabItemChance item = new PrefabItemChance();
@@ -188,6 +188,8 @@ class SpawnSettingsBase
 				factionKeys.Insert(fac.FactionName);
 		
 		ref array<Faction> entries = {};
+		manager.GetFactionsList(entries);
+		
 		foreach(Faction entry : entries)
 		{
 			SCR_Faction faction = SCR_Faction.Cast(entry);
