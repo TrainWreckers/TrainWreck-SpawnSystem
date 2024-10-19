@@ -254,19 +254,15 @@ class TW_SpawnManagerBase
 			int count = groups.Count();
 			
 			for(int i = 0; i < count; i++)						
-			{
+			{				
+				if(i < 0 || groups.IsEmpty())
+					break;
+				
 				SCR_AIGroup group = groups.Get(i);
 				
-				if(!group)
-				{
-					groups.Remove(i);
-					i -= 1;
-					continue;		
-				}
-
-				if(!group.IsWanderer())
+				if(!group || group.IsWanderer())
 					continue;
-				
+
 				TW_AISpawnPoint point = m_SpawnPointsNearPlayers.GetRandomElement();
 				GetGame().GetCallqueue().CallLater(CreateNewWaypointForGroup, i * 250, false, group, point);				
 			}
@@ -275,6 +271,9 @@ class TW_SpawnManagerBase
 	
 	private void CreateNewWaypointForGroup(SCR_AIGroup group, TW_AISpawnPoint point)
 	{
+		if(!group)
+			return;
+		
 		ref array<AIWaypoint> waypoints = {};
 		group.GetWaypoints(waypoints);
 		foreach(AIWaypoint waypoint : waypoints)
