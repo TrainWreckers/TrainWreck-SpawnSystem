@@ -260,7 +260,7 @@ class TW_SpawnManagerBase
 				
 				SCR_AIGroup group = groups.Get(i);
 				
-				if(!group || group.IsWanderer())
+				if(!group || !group.IsWanderer())
 					continue;
 
 				TW_AISpawnPoint point = m_SpawnPointsNearPlayers.GetRandomElement();
