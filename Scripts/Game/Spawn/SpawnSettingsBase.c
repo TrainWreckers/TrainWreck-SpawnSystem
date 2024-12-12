@@ -27,6 +27,9 @@ class SpawnSettingsBase
 	//! Time in seconds. Interval GC is checked
 	float GarbageCollectionTimerInSeconds;
 	
+	//! Max of groups that can spawn
+	int GroupSize;
+	
 	//! Waypoint to use when groups spawn
 	string DefendWaypointPrefab;
 	
@@ -50,7 +53,8 @@ class SpawnSettingsBase
 				 int gridRadius,
 				 int antiGridRadius,
 				 int antiGridSize,
-				 float gcTimer)
+				 float gcTimer,
+				 int groupSize)
 	{
 		ManagerType = type;
 		SpawnTimerInSeconds = spawnTimer;
@@ -60,7 +64,8 @@ class SpawnSettingsBase
 		AntiSpawnGridSize = antiGridSize;
 		GarbageCollectionTimerInSeconds = gcTimer;
 		WanderIntervalInSeconds = 60;
-		FactionSettings = {};		
+		FactionSettings = {};
+		GroupSize = groupSize;
 	}
 	
 	void AddFaction(FactionSpawnSettings settings)
@@ -83,7 +88,8 @@ class SpawnSettingsBase
 		saveContext.SetContainer(prettyContainer);
 		
 		saveContext.WriteValue("managerType", settings.ManagerType);
-		saveContext.WriteValue("spawnTimerInSeconds", settings.SpawnTimerInSeconds);
+		saveContext.WriteValue("groupSize", settings.GroupSize);
+		saveContext.WriteValue("spawnTimerInSeconds", settings.SpawnTimerInSeconds);		
 		saveContext.WriteValue("spawnGridSize", settings.SpawnGridSize);
 		saveContext.WriteValue("spawnGridRadius", settings.SpawnGridRadius);
 		saveContext.WriteValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
@@ -94,7 +100,7 @@ class SpawnSettingsBase
 		saveContext.WriteValue("attackWaypoint", settings.AttackWaypointPrefab);
 		saveContext.WriteValue("cycleWaypoint", settings.CycleWaypointPrefab);
 		saveContext.WriteValue("patrolWaypoint", settings.PatrolWaypointPrefab);
-		saveContext.WriteValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);
+		saveContext.WriteValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);		
 				
 		return prettyContainer.SaveToFile(FILENAME);
 	}
@@ -208,7 +214,7 @@ class SpawnSettingsBase
 	{
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
 		
-		settings.SetData("default", 2, 250, 3, 2, 150, 5.0);
+		settings.SetData("default", 2, 250, 3, 2, 150, 5.0, 3);
 		
 		settings.CycleWaypointPrefab = "{35BD6541CBB8AC08}Prefabs/AI/Waypoints/AIWaypoint_Cycle.et";
 		settings.PatrolWaypointPrefab = "{22A875E30470BD4F}Prefabs/AI/Waypoints/AIWaypoint_Patrol.et";
@@ -251,6 +257,7 @@ class SpawnSettingsBase
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
 		
 		loadContext.ReadValue("managerType", settings.ManagerType);
+		loadContext.ReadValue("groupSize", settings.GroupSize);
 		loadContext.ReadValue("spawnTimerInSeconds", settings.SpawnTimerInSeconds);
 		loadContext.ReadValue("spawnGridSize", settings.SpawnGridSize);
 		loadContext.ReadValue("spawnGridRadius", settings.SpawnGridRadius);
@@ -262,7 +269,7 @@ class SpawnSettingsBase
 		loadContext.ReadValue("attackWaypoint", settings.AttackWaypointPrefab);
 		loadContext.ReadValue("cycleWaypoint", settings.CycleWaypointPrefab);
 		loadContext.ReadValue("patrolWaypoint", settings.PatrolWaypointPrefab);
-		loadContext.ReadValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);
+		loadContext.ReadValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);		
 		
 		MergeFactionsInGame(settings.FactionSettings);
 		SaveToFile(settings);

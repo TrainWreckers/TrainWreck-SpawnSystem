@@ -376,8 +376,9 @@ class TW_SpawnManagerBase
 			bool tag = tagAsWanderer < spawnSettings.AIWanderChance;
 			
 			ref FactionSpawnInfo factionSettings = m_Spawnables.Get(selectedFaction);
-				
-			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), 1);
+			int groupSize = Math.RandomIntInclusive(1, m_SpawnSettings.GroupSize);
+			
+			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), groupSize);
 			group.SetWanderer(tag);
 			
 			GetGame().GetCallqueue().CallLater(SetGroupWaypoint, 500, false, group);			
