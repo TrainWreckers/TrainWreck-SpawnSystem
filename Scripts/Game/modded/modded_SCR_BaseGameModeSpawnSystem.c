@@ -14,11 +14,13 @@ modded class SCR_BaseGameMode
 	protected ref TW_SpawnManagerBase m_SpawnManager;
 	
 	override void EOnInit(IEntity owner)
-	{	
-		if(TW_Global.IsInRuntime())
-			LoadSpawnManager();
+	{					
+		super.EOnInit(owner);
 		
-		super.EOnInit(owner);					
+		if(TW_Global.IsInRuntime())
+		{
+			Event_OnGamePluginsInitialized.Insert(LoadSpawnManager);
+		}		
 	}
 	
 	protected void LoadSpawnManager()
@@ -27,7 +29,8 @@ modded class SCR_BaseGameMode
 		if(!(rpl.IsMaster() && rpl.Role() == RplRole.Authority))
 			return;
 		
+		Print("TrainWreck: Loading Spawn Manager");	
 		m_SpawnManager = new TW_SpawnManagerBase();
-		m_SpawnManager.Init();
+		m_SpawnManager.Init(this);
 	}
 }

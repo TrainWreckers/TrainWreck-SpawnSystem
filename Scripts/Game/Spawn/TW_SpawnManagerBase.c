@@ -116,10 +116,11 @@ class TW_SpawnManagerBase
 	private int m_MaxTotalAgents = 0;
 	private int m_SpawnQueueCount = 0;
 	
-	void Init()
+	void Init(SCR_BaseGameMode gameMode)
 	{
 		s_Instance = this;
 		m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
+		m_GameMode = gameMode;
 		
 		if(!m_SpawnSettings)
 		{
@@ -202,9 +203,15 @@ class TW_SpawnManagerBase
 				m_MaxTotalAgents += settings.MaxAmount;
 			}
 		
-		m_GameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
-		
-		GetGame().GetCallqueue().CallLater(ReRegisterSpawnPointGrid, 2500, false);
+		gameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
+	}
+	
+	//! Need to make sure the spawn grid matches settings file
+	private void RegisterBackgroundTasks()
+	{				
+		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
+		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
+		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
 	}
 	
 	void SpawnLoop()
@@ -233,16 +240,15 @@ class TW_SpawnManagerBase
 		GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, spawnCount);
 	}
 	
-	//! Need to make sure the spawn grid matches settings file
-	private void ReRegisterSpawnPointGrid()
+	
+	private void OnMonitorChanged(TW_MonitorPositions monitor)
 	{
+		PrintFormat("TrainWreck: Spawn System - Received new Monitor");
 		m_GameMode.GetOnPlayerPositionsUpdated().Insert(OnPlayerChunksUpdated);
 		TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
 		TW_VehicleSpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
 		
-		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
-		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
-		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
+		RegisterBackgroundTasks();
 	}
 	
 	protected void WanderLoop()
