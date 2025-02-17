@@ -1,0 +1,10 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ {
+  VerticalLayoutWidgetClass "{631F6929A721F308}" {
+   Name "ListVerticalLayout"
+   Slot FrameWidgetSlot "{631F6929A721F32E}" {
+   }
+  }
+ }
+}

@@ -1,0 +1,19 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ {
+  VerticalLayoutWidgetClass "{631F692E6A695234}" {
+   Name "VerticalLayout0"
+   Slot FrameWidgetSlot "{631F692E6A69525E}" {
+    Anchor 0.5 0.5 0.5 0.5
+    PositionX -960
+    OffsetLeft -960
+    PositionY -540
+    OffsetTop -540
+    OffsetRight 860
+    SizeY 30
+    OffsetBottom 510
+    SizeToContent 1
+   }
+  }
+ }
+}

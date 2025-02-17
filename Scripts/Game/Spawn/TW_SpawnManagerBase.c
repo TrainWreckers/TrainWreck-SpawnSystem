@@ -87,7 +87,7 @@ enum TW_AISpawnBehavior
 
 class TW_SpawnManagerBase
 {
-	private static TW_SpawnManagerBase s_Instance;
+	private static ref TW_SpawnManagerBase s_Instance;
 	static TW_SpawnManagerBase GetInstance()
 	{
 		return s_Instance;
@@ -101,7 +101,9 @@ class TW_SpawnManagerBase
 	
 	protected ref set<string> m_PlayerChunks = new set<string>();
 	protected ref set<string> m_AntiSpawnChunks = new set<string>();
+	
 	protected ref array<TW_AISpawnPoint> m_SpawnPointsNearPlayers = {};
+	
 	protected ref map<string, ref FactionSpawnSettings> m_FactionSettings = new map<string, ref FactionSpawnSettings>();
 	protected ref array<string> m_EnabledFactions = {};
 	protected ref map<string, int> m_FactionCounts = new map<string, int>();
@@ -133,12 +135,17 @@ class TW_SpawnManagerBase
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 		{
 			if(m_Spawnables.Contains(settings.FactionName))
+			{
+				PrintFormat("TrainWreck: TW_SpawnManagerBase -> Skipping '%1', spawnables already tracking it", settings.FactionName, LogLevel.WARNING);
 				continue;
+			}
 			
 			ref BehaviorWeights behaviorWeights = new BehaviorWeights();
 			
 			foreach(string name, float chance : settings.Behaviors)
 			{
+				PrintFormat("TrainWreck: TW_SpawnManagerBase '%1': %2", name, chance);
+				
 				if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Patrol))
 				{
 					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.Patrol);
@@ -167,18 +174,21 @@ class TW_SpawnManagerBase
 			
 			foreach(PrefabItemChance item : settings.Characters)
 				spawnInfo.AddCharacter(item);
+			
 			foreach(VehicleItemChance item : settings.Vehicles)
 			{
 				TW_Util.GetEntitySize(item.PrefabName);
 				spawnInfo.AddVehicle(item);
 			}
+			
 			foreach(PrefabItemChance item : settings.Groups)
 				spawnInfo.AddGroup(item);
 			
 			if(!m_FactionSettings.Contains(settings.FactionName))
 				m_FactionChances.Insert(settings.FactionName, settings.ChanceToSpawn);
 			
-			m_Spawnables.Insert(settings.FactionName, spawnInfo);						
+			m_Spawnables.Insert(settings.FactionName, spawnInfo);	
+			PrintFormat("TrainWreck: TW_SpawnManagerBase -> '%1' added to Spawnables", settings.FactionName);					
 		}
 		
 		FactionManager manager = GetGame().GetFactionManager();
@@ -191,16 +201,22 @@ class TW_SpawnManagerBase
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 			if(!m_FactionSettings.Contains(settings.FactionName) && settings.IsEnabled)
-			{
+			{			
 				if(!manager.GetFactionByKey(settings.FactionName))
 				{
 					PrintFormat("TrainWreck-SpawnSystem: %1 - either mod not loaded, or faction not available in this scenario", settings.FactionName, LogLevel.WARNING);
 					continue;
 				}	
 			
+				PrintFormat("TrainWreck: TW_SpawnManagerBase: '%1' Enabled with max amount of %2", settings.FactionName, settings.MaxAmount);
+			
 				m_FactionSettings.Insert(settings.FactionName, settings);
 				m_EnabledFactions.Insert(settings.FactionName);
 				m_MaxTotalAgents += settings.MaxAmount;
+			}
+			else 
+			{
+				PrintFormat("TrainWreck: TW_SpawnManagerBase: '%1' Enabled: %2", settings.FactionName, settings.IsEnabled);	
 			}
 		
 		gameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
@@ -208,7 +224,8 @@ class TW_SpawnManagerBase
 	
 	//! Need to make sure the spawn grid matches settings file
 	private void RegisterBackgroundTasks()
-	{				
+	{	
+		PrintFormat("TrainWreck: TW_SpawnManagerBase -> Background tasks registered");
 		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
@@ -460,6 +477,7 @@ class TW_SpawnManagerBase
 		m_AntiSpawnChunks.Copy(gridEvent.GetAntiChunks());
 		
 		m_SpawnPointsNearPlayers.Clear();
+		
 		TW_AISpawnPoint.GetSpawnPointsInChunks(m_PlayerChunks, m_SpawnPointsNearPlayers);
 	}
 	

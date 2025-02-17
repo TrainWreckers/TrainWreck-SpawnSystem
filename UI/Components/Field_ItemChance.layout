@@ -1,0 +1,86 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ {
+  PanelWidgetClass "{631F692E8D6607F8}" {
+   Name "Panel0"
+   Slot FrameWidgetSlot "{631F692E8E719703}" {
+    SizeToContent 1
+   }
+   {
+    VerticalLayoutWidgetClass "{631F692E93A2D6D6}" {
+     Name "VerticalLayout0"
+     Slot FrameWidgetSlot "{631F692E93A2D6F0}" {
+      SizeToContent 1
+     }
+     {
+      HorizontalLayoutWidgetClass "{631F6929D30BF250}" {
+       Name "HorizontalLayout2"
+       Slot LayoutSlot "{631F6929D30BF27D}" {
+       }
+       {
+        TextWidgetClass "{631F692EF48D1B63}" {
+         Name "Title"
+         Slot LayoutSlot {
+         }
+         Text "Title"
+        }
+        CheckBoxWidgetClass "{631F692983BC627C}" {
+         Name "CheckBox0"
+         Slot LayoutSlot "{631F692983BC6299}" {
+         }
+         components {
+          SCR_CheckboxComponent "{631F69298F658E85}" {
+          }
+         }
+         text "Enabled"
+        }
+       }
+      }
+      HorizontalLayoutWidgetClass "{631F692E9B9C0B2F}" {
+       Name "HorizontalLayout1"
+       Slot LayoutSlot "{631F692E9B9C0B43}" {
+       }
+       {
+        TextWidgetClass "{631F692EF78B25E5}" {
+         Name "ItemLabel"
+         Slot LayoutSlot "{631F692EF78B25FA}" {
+         }
+         Text "Item"
+        }
+        EditBoxWidgetClass "{631F692EEB29113D}" {
+         Name "ItemEditBox"
+         Slot LayoutSlot "{631F692EEB29115F}" {
+          HorizontalAlign 2
+          Padding 15 0 0 0
+          SizeMode Fill
+         }
+         "Horizontal alignment" Right
+        }
+       }
+      }
+      HorizontalLayoutWidgetClass "{631F692E9ACCF51B}" {
+       Name "HorizontalLayout0"
+       Slot LayoutSlot "{631F692E9ACCF53B}" {
+       }
+       {
+        TextWidgetClass "{631F692EF8912653}" {
+         Name "ItemChanceLabel"
+         Slot LayoutSlot "{631F692EF8912672}" {
+         }
+         Text "Chance"
+        }
+        SliderWidgetClass "{631F692EE471B354}" {
+         Name "ItemSlider"
+         Slot LayoutSlot "{631F692EE471B374}" {
+          Padding 15 0 0 0
+          SizeMode Fill
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

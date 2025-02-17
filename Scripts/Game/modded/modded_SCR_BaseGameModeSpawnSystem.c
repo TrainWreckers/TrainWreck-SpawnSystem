@@ -7,7 +7,7 @@ modded class SCR_BaseGameMode
 		
 		SpawnSettingsBase settings = m_SpawnManager.GetSettings();
 		
-		positionMonitor = new TW_MonitorPositions(settings.SpawnGridSize, settings.SpawnGridRadius, settings.AntiSpawnGridSize, settings.AntiSpawnGridRadius);
+		positionMonitor = new TW_MonitorPositions(settings.SpawnGridSize, settings.SpawnDistanceInChunks, settings.AntiSpawnGridSize, settings.AntiSpawnDistanceInChunks);
 		m_PositionMonitorUpdateInterval = 2.0;
 	}
 	
@@ -17,7 +17,7 @@ modded class SCR_BaseGameMode
 	{					
 		super.EOnInit(owner);
 		
-		if(TW_Global.IsInRuntime())
+		if(TW_Global.IsInRuntime() && Replication.IsServer())
 		{
 			Event_OnGamePluginsInitialized.Insert(LoadSpawnManager);
 		}		

@@ -9,17 +9,20 @@ class SpawnSettingsBase
 	//! Type of manager to use
 	string ManagerType;
 	
+	//! Chance a group/unit will spawn outside (instead of inside)
+	float SpawnOutsideChance;
+	
 	//! Time in seconds for checking when to spawn AI
 	int SpawnTimerInSeconds;
 	
-	//! The spawn radius will mimic location settings
-	int SpawnGridRadius;
+	//! The number of chunks (from player center) AI can spawn (Think minecraft view distance)
+	int SpawnDistanceInChunks;
 	
 	//! Grid Size
 	int SpawnGridSize;
 	
 	//! Radius in chunks around player that is considered off limits for AI to spawn
-	int AntiSpawnGridRadius;
+	int AntiSpawnDistanceInChunks;
 	
 	//! Anti Spawn Grid Size
 	int AntiSpawnGridSize;
@@ -27,7 +30,7 @@ class SpawnSettingsBase
 	//! Time in seconds. Interval GC is checked
 	float GarbageCollectionTimerInSeconds;
 	
-	//! Max of groups that can spawn
+	//! Maximum number of units that can spawn per group (Random value betwee 1 and this)
 	int GroupSize;
 	
 	//! Waypoint to use when groups spawn
@@ -58,9 +61,9 @@ class SpawnSettingsBase
 	{
 		ManagerType = type;
 		SpawnTimerInSeconds = spawnTimer;
-		SpawnGridRadius = gridRadius;
+		SpawnDistanceInChunks = gridRadius;
 		SpawnGridSize = gridSize;
-		AntiSpawnGridRadius = antiGridRadius;
+		AntiSpawnDistanceInChunks = antiGridRadius;
 		AntiSpawnGridSize = antiGridSize;
 		GarbageCollectionTimerInSeconds = gcTimer;
 		WanderIntervalInSeconds = 60;
@@ -75,34 +78,15 @@ class SpawnSettingsBase
 	
 	static const string FILENAME = "$profile:spawnSettings.json";
 	
-	static bool HasFile() 
-	{
-		SCR_JsonLoadContext load = new SCR_JsonLoadContext();
-		return load.LoadFromFile(FILENAME);
-	}
-	
 	static bool SaveToFile(SpawnSettingsBase settings)
 	{
-		ContainerSerializationSaveContext saveContext = new ContainerSerializationSaveContext();
-		PrettyJsonSaveContainer prettyContainer = new PrettyJsonSaveContainer();
-		saveContext.SetContainer(prettyContainer);
+		if(!TW_Util.SaveJsonFile(FILENAME, settings, true))
+		{
+			PrintFormat("TrainWreck: SpawnSettingsBase -> Failed to save to file '%1'", FILENAME, LogLevel.ERROR);
+			return false;
+		}
 		
-		saveContext.WriteValue("managerType", settings.ManagerType);
-		saveContext.WriteValue("groupSize", settings.GroupSize);
-		saveContext.WriteValue("spawnTimerInSeconds", settings.SpawnTimerInSeconds);		
-		saveContext.WriteValue("spawnGridSize", settings.SpawnGridSize);
-		saveContext.WriteValue("spawnGridRadius", settings.SpawnGridRadius);
-		saveContext.WriteValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
-		saveContext.WriteValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
-		saveContext.WriteValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
-		saveContext.WriteValue("factions", settings.FactionSettings);
-		saveContext.WriteValue("defendWaypoint", settings.DefendWaypointPrefab);
-		saveContext.WriteValue("attackWaypoint", settings.AttackWaypointPrefab);
-		saveContext.WriteValue("cycleWaypoint", settings.CycleWaypointPrefab);
-		saveContext.WriteValue("patrolWaypoint", settings.PatrolWaypointPrefab);
-		saveContext.WriteValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);		
-				
-		return prettyContainer.SaveToFile(FILENAME);
+		return true;
 	}
 	
 	private static FactionSpawnSettings GetDefaultFactionSettings(SCR_Faction faction)
@@ -110,10 +94,30 @@ class SpawnSettingsBase
 		ref FactionSpawnSettings factionSettings = new FactionSpawnSettings();
 				
 		factionSettings.FactionName = faction.GetFactionKey();
-		factionSettings.MaxAmount = 30;
-		factionSettings.IsEnabled = false;
+		
+		int maxAmount = 30;
+		bool isEnabled = false;
+		
+		if(faction.GetFactionKey() == "USSR")
+		{
+			maxAmount = 2;
+			isEnabled = true;	
+		}
+		else if(faction.GetFactionKey() == "CIV")
+		{
+			maxAmount = 10;
+			isEnabled = true;
+		}
+		else if(faction.GetFactionKey() == "FIA")
+		{
+			maxAmount = 60;
+			isEnabled = true;
+		}
+		
+		factionSettings.MaxAmount = maxAmount;
+		factionSettings.IsEnabled = isEnabled;
 		factionSettings.AIWanderChance = 0.25;
-		factionSettings.ChanceToSpawn = 0;
+		factionSettings.ChanceToSpawn = 10;
 		factionSettings.Characters = {};
 		factionSettings.Groups = {};
 		factionSettings.Vehicles = {};
@@ -160,7 +164,10 @@ class SpawnSettingsBase
 		{
 			ref PrefabItemChance item = new PrefabItemChance();
 			item.PrefabName = entry.GetPrefab();
-			item.Chance = defaultChance;
+			if(item.PrefabName.Contains("Random"))
+				item.Chance = 10;
+			else
+				item.Chance = defaultChance;
 			items.Insert(item);
 		}
 	}
@@ -212,6 +219,7 @@ class SpawnSettingsBase
 	
 	private static SpawnSettingsBase GetDefault()
 	{
+		PrintFormat("TrainWreck: SpawnSettingsBase -> Loading Default Settings", LogLevel.WARNING);
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
 		
 		settings.SetData("default", 2, 250, 3, 2, 150, 5.0, 3);
@@ -248,31 +256,22 @@ class SpawnSettingsBase
 		
 		if(!loadContext.LoadFromFile(FILENAME))
 		{
-			PrintFormat("TrainWreck-SpawnSystem: Failed to load settings from :%1", FILENAME, LogLevel.ERROR);
+			PrintFormat("TrainWreck: SpawnSettingsBase -> Failed to load settings from: %1", FILENAME, LogLevel.ERROR);
 			ref SpawnSettingsBase settings = GetDefault();
 			SpawnSettingsBase.SaveToFile(settings);
 			return settings;
 		}
 		
+		PrintFormat("TrainWreck: SpawnSettingsBase -> Successfully loaded spawnSettings.json");
+		
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
+		SCR_JsonLoadContext context = TW_Util.LoadJsonFile(FILENAME, true);
 		
-		loadContext.ReadValue("managerType", settings.ManagerType);
-		loadContext.ReadValue("groupSize", settings.GroupSize);
-		loadContext.ReadValue("spawnTimerInSeconds", settings.SpawnTimerInSeconds);
-		loadContext.ReadValue("spawnGridSize", settings.SpawnGridSize);
-		loadContext.ReadValue("spawnGridRadius", settings.SpawnGridRadius);
-		loadContext.ReadValue("antiSpawnGridRadius", settings.AntiSpawnGridRadius);
-		loadContext.ReadValue("garbageCollectionTimerInSeconds", settings.GarbageCollectionTimerInSeconds);
-		loadContext.ReadValue("factions", settings.FactionSettings);		
-		loadContext.ReadValue("antiSpawnGridSize", settings.AntiSpawnGridSize);
-		loadContext.ReadValue("defendWaypoint", settings.DefendWaypointPrefab);
-		loadContext.ReadValue("attackWaypoint", settings.AttackWaypointPrefab);
-		loadContext.ReadValue("cycleWaypoint", settings.CycleWaypointPrefab);
-		loadContext.ReadValue("patrolWaypoint", settings.PatrolWaypointPrefab);
-		loadContext.ReadValue("wanderIntervalInSeconds", settings.WanderIntervalInSeconds);		
-		
-		MergeFactionsInGame(settings.FactionSettings);
-		SaveToFile(settings);
+		if(!context.ReadValue("", settings))
+		{
+			PrintFormat("TrainWreck: SpawnSettingsBase -> Loading settings failed", LogLevel.ERROR);
+			return null;
+		}
 		
 		return settings;
 	}
