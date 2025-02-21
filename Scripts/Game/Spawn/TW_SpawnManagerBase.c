@@ -454,6 +454,13 @@ class TW_SpawnManagerBase
 			}
 			
 			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, characterPrefab, groupSize);
+			
+			if(!group)
+			{
+				PrintFormat("TrainWreck: Was unable to spawn group('%1') for faction %2", characterPrefab, selectedFaction);		
+				return;		
+			}
+			
 			group.SetWanderer(tag);
 			
 			// This unit is managed by our spawn system
