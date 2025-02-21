@@ -81,7 +81,8 @@ enum TW_AISpawnBehavior
 	DefendLocal,
 	DefendArea,
 	Patrol,
-	Attack
+	Attack,
+	NoWaypoints
 };
 
 
@@ -117,6 +118,32 @@ class TW_SpawnManagerBase
 	private bool isTrickleSpawning = false;
 	private int m_MaxTotalAgents = 0;
 	private int m_SpawnQueueCount = 0;
+	
+	//! Should we render debug statements solely meant to troubleshoot specific problems
+	protected bool IsDebug()
+	{
+		if(!m_SpawnSettings) 
+			return false;
+		
+		return m_SpawnSettings.ShowDebug;
+	}	
+	
+	
+	private void PrintSettings()
+	{
+		if(!IsDebug()) 
+			return;
+		
+		foreach(string factionName, FactionSpawnSettings settings : m_FactionSettings)
+		{		
+			PrintFormat("Faction: %1", factionName);
+				
+			foreach(PrefabItemChance item : settings.Characters)			
+			{
+				PrintFormat("\tPrefab: %1\n\tChance: %2\n\n", item.PrefabName, item.Chance);	
+			}
+		}
+	}
 	
 	void Init(SCR_BaseGameMode gameMode)
 	{
@@ -166,6 +193,11 @@ class TW_SpawnManagerBase
 					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.Attack);
 					behaviorWeights.Weights.Insert(chance);
 				}
+				else if(name == SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.NoWaypoints))
+				{
+					behaviorWeights.Behaviors.Insert(TW_AISpawnBehavior.NoWaypoints);
+					behaviorWeights.Weights.Insert(chance);
+				}
 			}
 			
 			m_FactionBehaviorWeights.Insert(settings.FactionName, behaviorWeights);
@@ -188,7 +220,12 @@ class TW_SpawnManagerBase
 				m_FactionChances.Insert(settings.FactionName, settings.ChanceToSpawn);
 			
 			m_Spawnables.Insert(settings.FactionName, spawnInfo);	
-			PrintFormat("TrainWreck: TW_SpawnManagerBase -> '%1' added to Spawnables", settings.FactionName);					
+			PrintFormat("TrainWreck: TW_SpawnManagerBase -> '%1' added to Spawnables", settings.FactionName);
+			
+			if(IsDebug())
+			{
+				GetGame().GetCallqueue().CallLater(PrintSettings, 30 * 1000, false);
+			}
 		}
 		
 		FactionManager manager = GetGame().GetFactionManager();
@@ -324,6 +361,10 @@ class TW_SpawnManagerBase
 		{
 			foreach(string faction, float weight : m_FactionChances)
 			{
+				// Should ignore any faction whose weights are set to 0
+				if(weight <= 0) 
+					continue;
+				
 				m_FactionCounts.Insert(faction, 0);
 				factionWeights.Insert(weight);
 				factions.Insert(faction);
@@ -380,10 +421,15 @@ class TW_SpawnManagerBase
 		ResourceName waypointOverride = ResourceName.Empty;
 		IEntity positionOverride = null;
 		
-		string selectedFaction = GetRandomFactionToSpawn();
+		string selectedFaction = GetRandomFactionToSpawn();				
 		
 		if(!selectedFaction)
 			return;
+		
+		if(IsDebug())
+		{
+			PrintFormat("TrainWreck: Selected faction to spawn -> '%1'", selectedFaction);
+		}
 				
 		if(IsValidSpawn(spawnPoint))
 		{			
@@ -400,9 +446,18 @@ class TW_SpawnManagerBase
 			
 			ref FactionSpawnInfo factionSettings = m_Spawnables.Get(selectedFaction);
 			int groupSize = Math.RandomIntInclusive(1, m_SpawnSettings.GroupSize);
+			ResourceName characterPrefab = factionSettings.GetRandomCharacter();
 			
-			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, factionSettings.GetRandomCharacter(), groupSize);
+			if(IsDebug())
+			{
+				PrintFormat("TrainWreck: Tag(%1), GroupSize(%2), Prefab(%3), Faction(%4)", tag, groupSize, characterPrefab, selectedFaction);
+			}
+			
+			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, characterPrefab, groupSize);
 			group.SetWanderer(tag);
+			
+			// This unit is managed by our spawn system
+			group.SetIsManagedBySpawnSystem(true);
 			
 			GetGame().GetCallqueue().CallLater(SetGroupWaypoint, 500, false, group);			
 		}
@@ -422,6 +477,10 @@ class TW_SpawnManagerBase
 		
 		int behaviorIndex = SCR_ArrayHelper.GetWeightedIndex(weights.Weights, Math.RandomFloat01());
 		TW_AISpawnBehavior behavior = weights.Behaviors.Get(behaviorIndex);
+		
+		// Do not assign a waypoint if no waypoints is selected
+		if(TW_AISpawnBehavior.NoWaypoints == behavior)
+			return;
 		
 		ResourceName waypoint = ResourceName.Empty;
 		vector position = group.GetOrigin();
@@ -489,6 +548,10 @@ class TW_SpawnManagerBase
 		
 		if(group)
 		{
+			// We should not delete units that are not managed by our spawn system
+			if(!group.IsManagedBySpawnSystem())
+				return;
+			
 			auto characters = group.GetAIMembers();
 			FactionKey key = group.GetFaction().GetFactionKey();
 			
@@ -501,8 +564,8 @@ class TW_SpawnManagerBase
 			return;
 		}
 		
-		SCR_ChimeraAIAgent ai = SCR_ChimeraAIAgent.Cast(agent);
-		FactionKey key = ai.GetFaction(agent).GetFactionKey();
+		SCR_ChimeraAIAgent ai = SCR_ChimeraAIAgent.Cast(agent);		
+		FactionKey key = TW_Util.GetFactionKeyFromAgent(ai);
 		
 		m_FactionCounts.Set(key, m_FactionCounts.Get(key) - 1);
 		
@@ -532,6 +595,9 @@ class TW_SpawnManagerBase
 		foreach(int agentN, SCR_AIGroup agent : agents)
 		{
 			if(!agent)
+				continue;
+			
+			if(!agent.IsManagedBySpawnSystem())
 				continue;
 			
 			positionText = TW_Util.ToGridText(agent.GetOrigin(), m_SpawnSettings.SpawnGridSize);
@@ -584,6 +650,10 @@ class TW_SpawnManagerBase
 				if(group.GetPlayerCount() > 0)
 					continue;
 				
+				// If this group is NOT managed by our spawn system -> ignore
+				if(!group.IsManagedBySpawnSystem())
+					continue;
+				
 				FactionKey key = group.GetFaction().GetFactionKey();
 				
 				if(!m_FactionGroups.Contains(key))
@@ -609,12 +679,10 @@ class TW_SpawnManagerBase
 				if(!aiAgent)
 					continue;
 				
-				Faction aiFaction = aiAgent.GetFaction(aiAgent);
+				FactionKey key= TW_Util.GetFactionKeyFromAgent(aiAgent);
 				
-				if(!aiFaction)					 
+				if(key == FactionKey.Empty)
 					continue;
-				
-				FactionKey key = aiFaction.GetFactionKey();
 				
 				if(!m_FactionAgents.Contains(key))
 					m_FactionAgents.Insert(key, {});

@@ -9,6 +9,9 @@ class SpawnSettingsBase
 	//! Type of manager to use
 	string ManagerType;
 	
+	//! Show extensive debug statements
+	bool ShowDebug;
+	
 	//! Chance a group/unit will spawn outside (instead of inside)
 	float SpawnOutsideChance;
 	
@@ -128,6 +131,7 @@ class SpawnSettingsBase
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal), 90);
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack), 0);
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea), 2);
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.NoWaypoints), 0);
 		
 		SCR_EntityCatalog characterCatlaog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.CHARACTER);
 		SCR_EntityCatalog vehicleCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
