@@ -163,15 +163,11 @@ class SpawnSettingsBase
 	{
 		if(count <= 0) return;
 		
-		int defaultChance = 0;
 		foreach(SCR_EntityCatalogEntry entry : entries)
 		{
 			ref PrefabItemChance item = new PrefabItemChance();
 			item.PrefabName = entry.GetPrefab();
-			if(item.PrefabName.Contains("Random"))
-				item.Chance = 10;
-			else
-				item.Chance = defaultChance;
+			item.Chance = 0;				
 			items.Insert(item);
 		}
 	}
