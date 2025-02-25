@@ -172,6 +172,9 @@ class TW_AreaOfInterestHandler
 		_aoiPlacementAttempt = parameters.RetriesPerPlacement;
 	}
 	
+	private ref array<TW_CompositionType> compositionTypes = {};
+	private TW_CompositionType currentType;
+	
 	bool StartSpawn()
 	{
 		if(_aoiPlacementAttempt <= 0) 
@@ -183,8 +186,10 @@ class TW_AreaOfInterestHandler
 		_areaOfInterestPosition = TW_Util.RandomPositionAround(_parameters.AreaCenter, _parameters.AreaRadius, _parameters.MinimumDistanceFromAreaCenter);
 		_previousPosition = _areaOfInterestPosition;
 		
-		if(Query())
-			SpawnNext();
+		SCR_Enum.GetEnumValues(TW_CompositionType, compositionTypes);
+		currentType = compositionTypes.GetRandomElement();
+		
+		Next();
 		
 		return !_placedEntities.IsEmpty();
 	}
@@ -209,136 +214,51 @@ class TW_AreaOfInterestHandler
 			GetOnAOIFailed().Invoke(reason);					
 	}
 	
-	private bool Query()
-	{		
-		vector position = _areaOfInterestPosition;
-		ref array<vector> positions = {};
-		
-		ref array<TW_CompositionType> types = {};
-		SCR_Enum.GetEnumValues(TW_CompositionType, types);
-				
-		foreach(TW_CompositionType currentType : types)
-		{							
-			positions.Clear();
-			string typeName = SCR_Enum.GetEnumName(TW_CompositionType, currentType);			
-			TW_CompositionSize compSize = GetSize(currentType);
-			int requiredCount = GetCountFor(currentType);						
-			
-			int positionAttempts = 0;			
-			int radius = (_parameters.NextSearchPosition * compSize);
-			int positionCount;
-			
-			positionCount = FindOpenAreasForCompositionType(position, radius, compSize, positions);
-			
-			while(positionCount <= 0 && positionAttempts < 10)
-			{
-				positionAttempts++;
-				radius = (_parameters.NextSearchPosition * compSize) + (_parameters.NextSearchPosition * compSize * positionAttempts);
-				positionCount = FindOpenAreasForCompositionType(position, radius, compSize, positions);	
-			}
-			
-			PrintFormat("TrainWreck: %1 Requires '%2' positions, found '%3', Radius: %4", typeName, requiredCount, positionCount, radius);
-			
-			if(positionCount > 0)
-			{
-				for(int i = 0; i < requiredCount; i++)
-				{
-					if(positions.IsEmpty()) 
-						break;										
-					
-					int randomIndex = positions.GetRandomIndex();
-					vector pos = positions.Get(randomIndex);					
-					positions.Remove(randomIndex);
-					
-					
-					ref TW_CompositionPlacementResult result = new TW_CompositionPlacementResult();
-					result.Position = pos;
-					result.Prefab = GetCompositionPrefab(currentType);
-					result.CompositionSize = compSize;
-					
-					_placements.Insert(result);
-					
-					if(GetOnCompositionPlacementSuccess())
-						GetOnCompositionPlacementSuccess().Invoke(result);
-				}
-			}
-			
-			ClearCountFor(currentType);			
-			currentType = GetNextSpawnType();
+	
+	private void Next()
+	{				
+		if(compositionTypes.IsEmpty())
+		{
+			PrintFormat("TrainWreck: Exhausted area of interested handler: %1 - Placed", _placedEntities.Count());
+			return;
 		}
 		
-		return !_placements.IsEmpty();
+		// Pick something random that still needs to be spawned
+		currentType = compositionTypes.GetRandomElement();
+		
+		int remaining = GetCountFor(currentType);
+		bool canSpawn = remaining > 0;
+		
+		if(!canSpawn)
+		{
+			compositionTypes.RemoveItem(currentType);
+		}				
+		else
+		{
+			TW_CompositionSize minimum = GetSize(currentType);
+			
+			int radius = (minimum * _parameters.NextSearchPosition) + PADDING;
+			vector placementArea = TW_Util.RandomPositionAround(_areaOfInterestPosition, radius, minimum);
+			
+			vector position;
+			if(FindOpenAreaForComposition(placementArea, radius, (int) minimum, position))
+			{
+				ref TW_CompositionPlacementResult result = new TW_CompositionPlacementResult();
+				result.Prefab = GetCompositionPrefab(currentType);
+				result.Position = position;
+				result.CompositionSize = minimum;
+				
+				SpawnFromResult(result);
+			}
+			else 
+				PrintFormat("TrainWreck: Failed to place '%1', Radius: %2, Min: %3", SCR_Enum.GetEnumName(TW_CompositionType, currentType), radius, minimum, LogLevel.WARNING);
+		}
+		
+		PrintFormat("TrainWreck: %1 has %2 remaining", SCR_Enum.GetEnumName(TW_CompositionType, currentType), remaining);
+		Decrement(currentType);		
+		GetGame().GetCallqueue().CallLater(Next, SPAWN_DELAY, false);
 	}
 	
-	private void SpawnNext()
-	{
-		int count = _placements.Count();
-		if(count == 0) return;
-		
-		ref TW_CompositionPlacementResult result = _placements.Get(0);		
-		SpawnFromResult(result);
-		
-		for(int i = 1; i < count; i++)
-		{
-			vector previousPosition = result.Position;
-			result = _placements.Get(i);
-			
-			float distance = vector.Distance(previousPosition, result.Position);
-			
-			if(distance <= (int)result.CompositionSize)
-			{
-				result.Position = TW_Util.RandomPositionAround(previousPosition, result.CompositionSize * 1.5 + PADDING, result.CompositionSize + PADDING);				
-				EntitySpawnParams params = EntitySpawnParams();
-				vector mat[4];
-				mat[3] = result.Position;
-				SCR_TerrainHelper.SnapToTerrain(mat, GetGame().GetWorld(), true);
-				result.Position = mat[3];			
-			}
-			
-			SpawnFromResult(result);
-		}
-		
-		_placements.Clear();		
-	}
-	
-	private TW_CompositionType GetNextSpawnType()
-	{
-		if(_parameters.SmallCompositions > 0)
-		{
-			if(_parameters.Compositions.HasSmallCompositions()) return TW_CompositionType.SMALL;
-			else
-			{
-				_parameters.SmallCompositions = 0;
-			}
-		}
-		
-		if(_parameters.MediumCompositions > 0)
-		{
-			if(_parameters.Compositions.HasMediumCompositions()) return TW_CompositionType.MEDIUM;
-			else
-				_parameters.MediumCompositions = 0;
-		}
-		
-		if(_parameters.LargeCompositions > 0)
-		{
-			if(_parameters.Compositions.HasLargeCompositions()) return TW_CompositionType.LARGE;
-			else _parameters.LargeCompositions = 0;
-		}
-		
-		if(_parameters.DefensiveWalls > 0)
-		{
-			if(_parameters.Compositions.HasDefensiveWalls()) return TW_CompositionType.WALLS;
-			else _parameters.DefensiveWalls = 0;
-		}
-		
-		if(_parameters.DefensiveBunkers > 0)
-		{
-			if(_parameters.Compositions.HasDefensiveBunkers()) return TW_CompositionType.BUNKERS;
-			else _parameters.DefensiveBunkers = 0;
-		}
-				
-		return TW_CompositionType.NONE;
-	}
 	
 	private void Decrement(TW_CompositionType type)
 	{
@@ -370,7 +290,7 @@ class TW_AreaOfInterestHandler
 			
 			case TW_CompositionType.BUNKERS:
 			{
-				_parameters.DefensiveWalls -= 1;
+				_parameters.DefensiveBunkers -= 1;
 				break;
 			}
 		}		
@@ -467,14 +387,9 @@ class TW_AreaOfInterestHandler
 		if(editable)
 		{
 			SCR_EditorPreviewParams previewParams = SCR_EditorPreviewParams.CreateParams(params.Transform, EEditorTransformVertical.TERRAIN);
-			SCR_RefPreviewEntity.SpawnAndApplyReference(editable, previewParams);
+			SCR_RefPreviewEntity.SpawnAndApplyReference(editable, previewParams);						
 			PrintFormat("TrainWreck-SpawnSystem: Oriented %1 to terrain", result.Prefab);
 		}
-		
-		SCR_SlotCompositionComponent slotComp = SCR_SlotCompositionComponent.Cast(entity.FindComponent(SCR_SlotCompositionComponent));
-		
-		if(slotComp)
-			slotComp.OrientToTerrain();
 		
 		SCR_AIWorld aiWorld = SCR_AIWorld.Cast(GetGame().GetAIWorld());
 		if(aiWorld)
@@ -486,7 +401,7 @@ class TW_AreaOfInterestHandler
 	
 	static int FindOpenAreasForCompositionType(vector centerPosition, float radius, TW_CompositionSize size, out notnull array<vector> positions, int maxResults = 20)
 	{
-		int positionCount = SCR_WorldTools.FindAllEmptyTerrainPositions(positions, centerPosition, radius, (int)size, 10, maxResults, TraceFlags.ENTS | TraceFlags.WORLD);
+		int positionCount = SCR_WorldTools.FindAllEmptyTerrainPositions(positions, centerPosition, radius, (int)size, 10, maxResults, TraceFlags.ENTS);
 		
 		EWaterSurfaceType type;
 		float lakeArea;
@@ -512,7 +427,7 @@ class TW_AreaOfInterestHandler
 	
 	static bool FindOpenAreaForComposition(vector centerPosition, float radius, TW_CompositionSize size, out vector position)
 	{
-		bool foundPosition = SCR_WorldTools.FindEmptyTerrainPosition(position, centerPosition, radius, (int)size, (int)size, TraceFlags.ENTS | TraceFlags.WORLD);		
+		bool foundPosition = SCR_WorldTools.FindEmptyTerrainPosition(position, centerPosition, radius, (int)size, (int)size, TraceFlags.ENTS);		
 		
 		if(!foundPosition)
 			return false;

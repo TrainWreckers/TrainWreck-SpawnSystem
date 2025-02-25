@@ -128,6 +128,7 @@ modded class SCR_BaseGameMode
 	private void Test()
 	{
 		int count = 15;
+		vector center = Vector(3219.106, 0, 1497.673);
 		for(int i = 0; i < count; i++)
 		{
 			ref TW_CompositionSpawnParameters params = new TW_CompositionSpawnParameters(GetUSSRCompositions());
@@ -135,8 +136,8 @@ modded class SCR_BaseGameMode
 			
 			PrintFormat("TrainWreck: Spawning around: %1", WidgetManager.Translate(location.LocationName()));
 			
-			params.AreaCenter = location.GetPosition();
-			params.AreaRadius = (m_MapManager.settings.GetConfigType(location.LocationType()).radius * 2) * m_MapManager.settings.gridSize;
+			params.AreaCenter = center; // location.GetPosition();
+			params.AreaRadius = 120; //(m_MapManager.settings.GetConfigType(location.LocationType()).radius * 2) * m_MapManager.settings.gridSize;
 			params.RetriesPerPlacement = 5;
 			
 			params.SmallCompositions = Math.RandomIntInclusive(1, 5);
