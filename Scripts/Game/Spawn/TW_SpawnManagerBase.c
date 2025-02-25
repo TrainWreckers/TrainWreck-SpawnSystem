@@ -271,10 +271,7 @@ class TW_SpawnManagerBase
 	void SpawnLoop()
 	{
 		if(GetGame().GetPlayerManager().GetPlayerCount() <= 0)
-		{
-			Print("TrainWreck-SpawnSystem: No players on map. Skipping spawn...");
 			return;
-		}
 		
 		if(isTrickleSpawning)
 			return;

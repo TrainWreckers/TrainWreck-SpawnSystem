@@ -98,27 +98,8 @@ class SpawnSettingsBase
 				
 		factionSettings.FactionName = faction.GetFactionKey();
 		
-		int maxAmount = 30;
-		bool isEnabled = false;
-		
-		if(faction.GetFactionKey() == "USSR")
-		{
-			maxAmount = 2;
-			isEnabled = true;	
-		}
-		else if(faction.GetFactionKey() == "CIV")
-		{
-			maxAmount = 10;
-			isEnabled = true;
-		}
-		else if(faction.GetFactionKey() == "FIA")
-		{
-			maxAmount = 60;
-			isEnabled = true;
-		}
-		
-		factionSettings.MaxAmount = maxAmount;
-		factionSettings.IsEnabled = isEnabled;
+		factionSettings.MaxAmount = 0;
+		factionSettings.IsEnabled = false;
 		factionSettings.AIWanderChance = 0.25;
 		factionSettings.ChanceToSpawn = 10;
 		factionSettings.Characters = {};
