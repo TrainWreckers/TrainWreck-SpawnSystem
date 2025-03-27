@@ -1,0 +1,143 @@
+GenericEntity : "{6E9190BC2713551D}Prefabs/Compositions/Slotted/BuildableComposition_Base.et" {
+ ID "5282DCB5DFC8538F"
+ {
+  $grp TW_AISpawnPoint {
+   {
+    ID "64C2E22B70A11B28"
+    coords 11.987 0.127 -6.844
+   }
+   {
+    ID "64C2E22B70A1ACCA"
+    coords 6.816 0.131 -7.568
+   }
+   {
+    ID "64C2E22B70A1ACDA"
+    coords 12.122 0.128 -9.772
+   }
+   {
+    ID "64C2E22B70A22E14"
+    coords -6.595 0.145 -10.161
+   }
+   {
+    ID "64C2E22B70A22EE5"
+    coords -11.482 0.139 -7.094
+   }
+   {
+    ID "64C2E22B70A2599F"
+    coords -11.463 0.135 -9.791
+   }
+   {
+    ID "64C2E22B70A28E46"
+    coords -10.69 0.135 -0.523
+   }
+   {
+    ID "64C2E22B70A28E79"
+    coords -10.997 0.137 1.708
+   }
+   {
+    ID "64C2E22B70A2D692"
+    coords -6.212 0.127 -7.325
+   }
+   {
+    ID "64C2E22B70A35A4A"
+    coords -5.785 0.13 2.171
+   }
+   {
+    ID "64C2E22B70A370B1"
+    coords -6.58 0.13 -0.805
+   }
+   {
+    ID "64C2E22B70A3A660"
+    coords 11.468 0.137 -1.456
+   }
+   {
+    ID "64C2E22B70A3E3BD"
+    coords 12.158 0.119 -0.579
+   }
+   {
+    ID "64C2E22B70B84FAE"
+    coords 6.011 0.141 -9.851
+   }
+   {
+    ID "64C2E22B70BC4D0E"
+    coords 8.418 0.126 10.263
+   }
+   {
+    ID "64C2E22B70BC4D17"
+    coords 12.072 0.125 10.35
+   }
+   {
+    ID "64C2E22B70BC4D1D"
+    coords 6.987 0.139 -0.994
+   }
+   {
+    ID "64C2E22B70BC52F9"
+    coords 12.149 0.116 6.566
+   }
+   {
+    ID "64C2E22B70BC6F6E"
+    coords 6.512 0.157 0.58
+   }
+   {
+    ID "64C2E22B70BC932B"
+    coords -11.896 0.131 6.541
+   }
+   {
+    ID "64C2E22B70BCE260"
+    coords 8.442 0.13 6.958
+   }
+   {
+    ID "64C2E22B70BD061E"
+    coords -7.122 0.121 10.39
+   }
+   {
+    ID "64C2E22B70BD308D"
+    coords -12.201 0.128 10.298
+   }
+   {
+    ID "64C2E22B70BD30FB"
+    coords -9.224 0.122 10.444
+   }
+   {
+    ID "64C2E22B70BD6329"
+    coords -7.418 0.122 6.507
+   }
+   {
+    ID "64C2E22B70BD9224"
+    coords -9.749 -0.191 15.702
+   }
+   {
+    ID "64C2E22B70BE1555"
+    coords -0.368 0.096 9.084
+   }
+   {
+    ID "64C2E22B70BE72F7"
+    coords 8.089 0.066 13.807
+   }
+   {
+    ID "64C2E22B70BEA64B"
+    coords 3.876 -0.097 -12.809
+   }
+   {
+    ID "64C2E22B70BEEAF8"
+    coords 1.71 0.095 2.356
+   }
+   {
+    ID "64C2E22B70BEEE6C"
+    coords 1.905 0.089 -6.772
+   }
+   {
+    ID "64C2E22B70BF7137"
+    coords -4.497 -0.106 -12.768
+   }
+   {
+    ID "64C2E22B70BFAA4C"
+    coords 8.901 -0.323 -17.651
+   }
+   {
+    ID "64C2E22B70BFF10F"
+    coords 11.731 -0.4 -15.318
+   }
+  }
+ }
+}

@@ -47,6 +47,27 @@ class FactionSpawnInfo
 			return TW_VehicleType.Medium;
 		return TW_VehicleType.Large;
 	}
+	
+	private ref array<int> _vehicleValues = {};
+	TW_VehicleType GetRandomTypeFromFlag(TW_VehicleType flags)
+	{
+		ref array<TW_VehicleType> selected = {};		
+		if(_vehicleValues.IsEmpty())
+		{
+			SCR_Enum.GetEnumValues(TW_VehicleType, _vehicleValues);						
+		}		
+		
+		foreach(TW_VehicleType val : _vehicleValues)
+		{
+			if(SCR_Enum.HasFlag(flags, val))
+				selected.Insert(val);
+		}
+		
+		if(selected.IsEmpty())
+			return TW_VehicleType.Small;
+		
+		return selected.GetRandomElement();
+	}
 		
 	ResourceName GetRandomCharacter() 
 	{ 
@@ -104,6 +125,7 @@ class TW_SpawnManagerBase
 	protected ref set<string> m_AntiSpawnChunks = new set<string>();
 	
 	protected ref array<TW_AISpawnPoint> m_SpawnPointsNearPlayers = {};
+	protected ref array<TW_VehicleSpawnPoint> m_VehicleSpawnPointsNearPlayers = {};
 	
 	protected ref map<string, ref FactionSpawnSettings> m_FactionSettings = new map<string, ref FactionSpawnSettings>();
 	protected ref array<string> m_EnabledFactions = {};
@@ -116,7 +138,6 @@ class TW_SpawnManagerBase
 	
 	ref SpawnSettingsBase GetSettings() { return m_SpawnSettings; }
 	private bool isTrickleSpawning = false;
-	private int m_MaxTotalAgents = 0;
 	private int m_SpawnQueueCount = 0;
 	
 	//! Should we render debug statements solely meant to troubleshoot specific problems
@@ -156,8 +177,6 @@ class TW_SpawnManagerBase
 			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
 			return;
 		}
-		
-		m_MaxTotalAgents = 0;
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 		{
@@ -249,7 +268,6 @@ class TW_SpawnManagerBase
 			
 				m_FactionSettings.Insert(settings.FactionName, settings);
 				m_EnabledFactions.Insert(settings.FactionName);
-				m_MaxTotalAgents += settings.MaxAmount;
 			}
 			else 
 			{
@@ -257,7 +275,45 @@ class TW_SpawnManagerBase
 			}
 		
 		gameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
+		SpawnPlayerBases();
 	}
+	
+	private ref TW_RequiredAOIHandler _usPlayerAOI;
+	private ref TW_RequiredAOIHandler _ussrPlayerAOI;
+	private ref TW_RequiredAOIHandler _fiaPlayerAOI;
+	
+	private void SpawnPlayerBases()
+	{		
+		if(GetSettings().ShouldSpawnUSPlayerBase)
+		{
+			_usPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetUSPlayerSpawnAreaConfig());
+			
+			if(_usPlayerAOI.StartSpawn())
+				PrintFormat("TrainWreck: Spawn started");
+			else 
+				PrintFormat("TrainWreck: Spawn for required AOI failed", LogLevel.ERROR);		
+		}	
+		
+		if(GetSettings().ShouldSpawnUSSRPlayerBase)
+		{
+			_ussrPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetUSSRPlayerSpawnAreaConfig());
+			
+			if(_ussrPlayerAOI.StartSpawn())
+				PrintFormat("TrainWreck: Spawn started");
+			else 
+				PrintFormat("TrainWreck: Spawn for required AOI failed", LogLevel.ERROR);		
+		}
+		
+		if(GetSettings().ShouldSpawnFIAPlayerBase)
+		{
+			_fiaPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetFIAPlayerSpawnAreaConfig());	
+			
+			if(_fiaPlayerAOI.StartSpawn())
+				PrintFormat("TrainWreck: Spawn started");
+			else 
+				PrintFormat("TrainWreck: Spawn for required AOI failed", LogLevel.ERROR);		
+		}
+	}		
 	
 	//! Need to make sure the spawn grid matches settings file
 	private void RegisterBackgroundTasks()
@@ -266,21 +322,97 @@ class TW_SpawnManagerBase
 		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
 		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
+		
+		if(m_SpawnSettings.VehicleSpawnSettings && m_SpawnSettings.VehicleSpawnSettings.ShouldSpawnVehicles)
+			GetGame().GetCallqueue().CallLater(VehicleLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
 	}
 	
-	void SpawnLoop()
-	{
+	private static ref map<string, TW_VehicleType> _vehicleTypeMap = new map<string, TW_VehicleType>();
+	private static ref array<string> _vehicleTypeNames = {};
+	
+	void VehicleLoop()
+	{		
 		if(GetGame().GetPlayerManager().GetPlayerCount() <= 0)
 			return;
 		
+		TW_VehicleSpawnPoint.ManageVehicles(m_PlayerChunks, m_SpawnSettings.VehicleSpawnSettings.DeleteIfMoreThanChunksAway);
+		
+		if(m_VehicleSpawnPointsNearPlayers.IsEmpty())
+			return;				
+		
+		if(_vehicleTypeMap.Count() == 0)
+		{
+			ref array<int> values = {};
+			SCR_Enum.GetEnumValues(TW_VehicleType, values);
+			
+			foreach(int val : values)
+			{
+				string name = SCR_Enum.GetEnumName(TW_VehicleType, val);
+				_vehicleTypeMap.Insert(name, val);
+				_vehicleTypeNames.Insert(name);
+			}
+		}
+				
+		int amount = Math.RandomIntInclusive(2, 10);
+		
+		for(int i = 0; i < amount; i++)
+		{
+			// Pick a random vehicle spawn point
+			string typeName = _vehicleTypeNames.GetRandomElement();
+			TW_VehicleType type = _vehicleTypeMap.Get(typeName);
+			
+			if(m_VehicleSpawnPointsNearPlayers.IsEmpty())
+				break;
+			
+			TW_VehicleSpawnPoint spawnPoint = m_VehicleSpawnPointsNearPlayers.GetRandomElement();
+			m_VehicleSpawnPointsNearPlayers.RemoveItem(spawnPoint);
+			
+			if(!spawnPoint.IsActive())
+				continue;
+			
+			TW_VehicleType vehicleFlags = spawnPoint.GetAllowedVehicleTypes();			
+			string factionName = m_EnabledFactions.GetRandomElement();
+			FactionSpawnInfo settings = m_Spawnables.Get(factionName);
+			
+			TW_VehicleType randomType = settings.GetRandomTypeFromFlag(vehicleFlags);
+			ResourceName vehiclePrefab = settings.GetRandomVehicle(randomType);
+			
+			IEntity vehicle;
+			if(!spawnPoint.SpawnVehicle(vehiclePrefab, vehicle, m_SpawnSettings.VehicleSpawnSettings.VehicleChanceToSpawn))
+				continue;
+			
+			TW_VehicleSpawnPoint.s_VehicleGrid.RemoveCoord(spawnPoint.GetOrigin());			
+			TW_Util.ApplyRandomDamageToEntity(vehicle);		
+		}
+		
+		m_VehicleSpawnPointsNearPlayers.Clear();
+	}	
+	
+	void SpawnLoop()
+	{				
+		if(GetGame().GetPlayerManager().GetPlayerCount() <= 0)
+		{
+			if(IsDebug())
+				Print("TrainWreck: No Players active -> Skipping spawn logic");
+		}
+		
+		if(m_SpawnPointsNearPlayers.IsEmpty())
+		{
+			if(IsDebug())
+			{
+				Print("TrainWreck: No spawn points near players? Doubtful... something may have broke", LogLevel.WARNING);
+			}
+		}
+		
 		if(isTrickleSpawning)
+		{
+			if(IsDebug())
+				Print("TrainWreck: Is Trickle Spawning...");
 			return;
+		}
 		
 		ref array<SCR_AIGroup> groups = {};
 		int agentCount = GetAgentCount(groups);
-		
-		if(agentCount >= m_MaxTotalAgents)
-			return;
 		
 		int spawnCount = Math.RandomIntInclusive(0, 10);
 		m_SpawnQueueCount += spawnCount;
@@ -342,54 +474,64 @@ class TW_SpawnManagerBase
 	
 	protected bool IsValidSpawn(TW_AISpawnPoint spawnPoint)
 	{
-		if(!spawnPoint) return false;
+		if(!spawnPoint || !spawnPoint.IsActive()) return false;
+		
 		string position = TW_Util.ToGridText(spawnPoint.GetOrigin(), m_SpawnSettings.AntiSpawnGridSize);
 		return !m_AntiSpawnChunks.Contains(position);
 	}
 	
 	protected FactionKey GetRandomFactionToSpawn()
 	{
+		if(m_FactionCounts.IsEmpty())
+		{
+			if(IsDebug())
+				PrintFormat("TrainWreck: Faction counts are empty. Cannot pick faction", LogLevel.WARNING);
+			return FactionKey.Empty;
+		}
+			
 		ref array<string> factions = new array<string>();
 		ref array<float> factionWeights = new array<float>();
 		
-		FactionSpawnSettings info;
-		
-		if(m_FactionCounts.IsEmpty())
-		{
-			foreach(string faction, float weight : m_FactionChances)
-			{
-				// Should ignore any faction whose weights are set to 0
-				if(weight <= 0) 
-					continue;
-				
-				m_FactionCounts.Insert(faction, 0);
-				factionWeights.Insert(weight);
-				factions.Insert(faction);
-			}
-			
-			int index = SCR_ArrayHelper.GetWeightedIndex(factionWeights, Math.RandomFloat01());
-			return factions.Get(index);
-		}
+		FactionSpawnSettings info;				
 		
 		foreach(string key, int amount : m_FactionCounts)
 		{
 			if(!m_FactionSettings.Contains(key))
 			{
+				if(IsDebug())
+				{
+					PrintFormat("TrainWreck: Faction settings for '%1' not found. Skipping for spawn eligibility", key);
+				}
 				continue;
 			}
 			
 			info = m_FactionSettings.Get(key);
 			
+			if(IsDebug())
+			{
+				PrintFormat("TrainWreck: Faction '%1' should spawn around %2 units: has %3 right now", key, info.MaxAmount, amount);
+			}
+			
 			if(amount < info.MaxAmount)
 			{
 				factions.Insert(key);
 				factionWeights.Insert(m_FactionChances.Get(key));	
+				
+				if(IsDebug())
+				{
+					PrintFormat("TrainWreck: %1 has less than max amount of %2", key, info.MaxAmount);
+				}
 			}
 		}
 		
 		int count = factions.Count();
 		if(count > 0)
 		{
+			if(IsDebug())
+			{
+				PrintFormat("TrainWreck: Factions eligible to spawn: %1", SCR_StringHelper.Join(", ", factions));
+			}
+			
 			int index = SCR_ArrayHelper.GetWeightedIndex(factionWeights, Math.RandomFloat01());
 			return factions.Get(index);
 		}
@@ -418,15 +560,16 @@ class TW_SpawnManagerBase
 		ResourceName waypointOverride = ResourceName.Empty;
 		IEntity positionOverride = null;
 		
-		string selectedFaction = GetRandomFactionToSpawn();				
+		string selectedFaction = GetRandomFactionToSpawn();
 		
-		if(!selectedFaction)
+		if(selectedFaction == FactionKey.Empty || !selectedFaction)
+		{
+			isTrickleSpawning = false;
 			return;
+		}
 		
 		if(IsDebug())
-		{
 			PrintFormat("TrainWreck: Selected faction to spawn -> '%1'", selectedFaction);
-		}
 				
 		if(IsValidSpawn(spawnPoint))
 		{			
@@ -455,6 +598,7 @@ class TW_SpawnManagerBase
 			if(!group)
 			{
 				PrintFormat("TrainWreck: Was unable to spawn group('%1') for faction %2", characterPrefab, selectedFaction);		
+				GetGame().GetCallqueue().CallLater(InvokeSpawnOn, 0.15, false, remainingCount);
 				return;		
 			}
 			
@@ -539,9 +683,18 @@ class TW_SpawnManagerBase
 		m_PlayerChunks.Copy(gridEvent.GetPlayerChunks());
 		m_AntiSpawnChunks.Copy(gridEvent.GetAntiChunks());
 		
+		int before = m_SpawnPointsNearPlayers.Count();
+		
 		m_SpawnPointsNearPlayers.Clear();
+		m_VehicleSpawnPointsNearPlayers.Clear();
 		
 		TW_AISpawnPoint.GetSpawnPointsInChunks(m_PlayerChunks, m_SpawnPointsNearPlayers);
+		TW_VehicleSpawnPoint.GetSpawnPointsInChunks(m_PlayerChunks, m_VehicleSpawnPointsNearPlayers);
+		
+		if(IsDebug())
+		{
+			PrintFormat("TrainWreck: Updating player chunks. Count Before (%1) -> After (%2)", before, m_SpawnPointsNearPlayers.Count());
+		}
 	}
 	
 	protected void ProcessForGC(AIAgent agent)
@@ -586,7 +739,7 @@ class TW_SpawnManagerBase
 	void GarbageCollection()
 	{
 		ref array<SCR_AIGroup> agents = {};
-		int currentAgents = GetAgentCount(agents, true);
+		int currentAgents = GetAgentCount(agents, false);
 		int queuedForGC = 0;
 		int vehiclesQueuedForGC = 0;
 		
@@ -632,6 +785,7 @@ class TW_SpawnManagerBase
 	{
 		m_FactionGroups.Clear();
 		m_FactionAgents.Clear();
+		m_FactionCounts.Clear();
 		
 		foreach(string key : m_EnabledFactions)
 			if(m_FactionCounts.Contains(key))
@@ -661,7 +815,7 @@ class TW_SpawnManagerBase
 				FactionKey key = group.GetFaction().GetFactionKey();
 				
 				if(!m_FactionGroups.Contains(key))
-					m_FactionGroups.Insert(key, {});								
+					m_FactionGroups.Insert(key, {});							
 				
 				if(includeAll || !group.IgnoreGlobalCount())
 				{
@@ -676,7 +830,7 @@ class TW_SpawnManagerBase
 					count += group.GetAgentsCount();
 				}
 			}
-			else
+			/*else
 			{
 				SCR_ChimeraAIAgent aiAgent = SCR_ChimeraAIAgent.Cast(agent);
 				
@@ -698,8 +852,12 @@ class TW_SpawnManagerBase
 				
 				m_FactionAgents.Get(key).Insert(aiAgent);
 				count++;
-			}
+			}*/
 		}
+		
+		if(IsDebug())
+			foreach(string key, int amount : m_FactionCounts)
+				PrintFormat("TrainWreck: Current count for %1 is %2", key, amount);
 		
 		return count;
 	}

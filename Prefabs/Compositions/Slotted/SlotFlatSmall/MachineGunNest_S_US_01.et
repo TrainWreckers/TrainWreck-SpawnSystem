@@ -1,0 +1,15 @@
+GenericEntity : "{6E9190BC2713551D}Prefabs/Compositions/Slotted/BuildableComposition_Base.et" {
+ ID "5282DCB5DFC8538F"
+ {
+  $grp TW_AISpawnPoint {
+   {
+    ID "64C2E224AE2C501F"
+    coords 3.065 -0.081 -0.961
+   }
+   {
+    ID "64C2E224AE2C5078"
+    coords -3.453 -0.081 -0.487
+   }
+  }
+ }
+}

@@ -1,0 +1,163 @@
+GenericEntity : "{6E9190BC2713551D}Prefabs/Compositions/Slotted/BuildableComposition_Base.et" {
+ ID "5282DCB5DFC8538F"
+ {
+  $grp TW_AISpawnPoint {
+   {
+    ID "64C2E22BB3607F55"
+    coords 7.401 -0.126 -18.447
+   }
+   {
+    ID "64C2E22BB3607F6F"
+    coords 1.83 -0.052 -18.303
+   }
+   {
+    ID "64C2E22BB3608F4C"
+    coords -4.092 0.187 -4.593
+   }
+   {
+    ID "64C2E22BB36094C1"
+    coords -6.692 0.168 -4.928
+   }
+   {
+    ID "64C2E22BB360FD0D"
+    coords -2.513 -0.076 -18.148
+   }
+   {
+    ID "64C2E22BB360FF97"
+    coords -8.565 -0.061 -18.168
+   }
+   {
+    ID "64C2E22BB360FFE8"
+    coords -4.07 0.18 -2.649
+   }
+   {
+    ID "64C2E22BB3611F0B"
+    coords 7.537 0.188 -5.299
+   }
+   {
+    ID "64C2E22BB3616526"
+    coords 4.399 0.18 -3.255
+   }
+   {
+    ID "64C2E22BB3618E47"
+    coords 6.905 0.174 -3.105
+   }
+   {
+    ID "64C2E22BB3618E53"
+    coords 4.767 0.196 -10.637
+   }
+   {
+    ID "64C2E22BB3618E59"
+    coords 4.646 0.184 -12.384
+   }
+   {
+    ID "64C2E22BB3618EA4"
+    coords 7.24 0.192 -12.642
+   }
+   {
+    ID "64C2E22BB3619473"
+    coords 7.368 0.172 -10.238
+   }
+   {
+    ID "64C2E22BB3622A85"
+    coords -7.44 0.171 1.887
+   }
+   {
+    ID "64C2E22BB362AF21"
+    coords 4.468 0.185 4.242
+   }
+   {
+    ID "64C2E22BB362AF4C"
+    coords 7.363 0.171 4.166
+   }
+   {
+    ID "64C2E22BB362F045"
+    coords 4.548 0.185 1.848
+   }
+   {
+    ID "64C2E22BB363527B"
+    coords -7.024 0.182 -2.174
+   }
+   {
+    ID "64C2E22BB3639005"
+    coords -4.468 0.186 2.377
+   }
+   {
+    ID "64C2E22BB3639009"
+    coords -7.284 0.183 4.86
+   }
+   {
+    ID "64C2E22BB363D3C9"
+    coords -4.64 0.184 4.452
+   }
+   {
+    ID "64C2E22BB36C17D5"
+    coords -9.924 -0.13 -15.101
+   }
+   {
+    ID "64C2E22BB36C17E3"
+    coords -8.936 -0.13 -12.706
+   }
+   {
+    ID "64C2E22BB36C4736"
+    coords 11.601 0.101 4.581
+   }
+   {
+    ID "64C2E22BB36C473B"
+    coords 7.236 0.19 1.7
+   }
+   {
+    ID "64C2E22BB36C474E"
+    coords 11.556 -0.142 -1.29
+   }
+   {
+    ID "64C2E22BB36C596F"
+    coords 12.573 0.097 -6.421
+   }
+   {
+    ID "64C2E22BB36C5976"
+    coords -6.599 -0.13 -14.702
+   }
+   {
+    ID "64C2E22BB36C9A30"
+    coords -0.303 0.068 -1.111
+   }
+   {
+    ID "64C2E22BB36C9BC5"
+    coords -7.367 -0.36 17.801
+   }
+   {
+    ID "64C2E22BB36C9BCD"
+    coords -0.038 0.095 -6.901
+   }
+   {
+    ID "64C2E22BB36E0D45"
+    coords 0.686 0.097 16.937
+   }
+   {
+    ID "64C2E22BB36E6F24"
+    coords 0.252 0.095 11.829
+   }
+   {
+    ID "64C2E22BB36E8828"
+    coords 2.933 -0.07 17.639
+   }
+   {
+    ID "64C2E22BB36E885D"
+    coords 4.654 0.183 -5.245
+   }
+   {
+    ID "64C2E22BB36EA0D6"
+    coords 8.988 0.024 17.769
+   }
+   {
+    ID "64C2E22BB36F22B0"
+    coords 0.077 0.094 4.775
+   }
+   {
+    ID "64C2E22BB36FC69E"
+    coords 0.393 0.096 7.972
+   }
+  }
+ }
+}

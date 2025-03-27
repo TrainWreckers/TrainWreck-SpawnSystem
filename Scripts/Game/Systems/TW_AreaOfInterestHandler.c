@@ -1,21 +1,3 @@
-//! Composition Size Type, where the integer value corresponds to its diameter
-enum TW_CompositionSize
-{
-	SMALL = 8,
-	MEDIUM = 15,
-	LARGE = 23
-};
-
-enum TW_CompositionType
-{
-	SMALL = 0,
-	MEDIUM = 1,
-	LARGE = 2,
-	WALLS = 3,
-	BUNKERS = 4,
-	NONE = 5
-};
-
 class TW_CompositionSpawnParameters
 {
 	int SmallCompositions;
@@ -33,8 +15,14 @@ class TW_CompositionSpawnParameters
 	//! Center of area/location (like a town for instance)
 	vector AreaCenter;
 	
-	//! The radius of said location where this area of interest should spawn around
+	//! Try to place the AOI within this distance of AreaCenter
 	float AreaRadius;
+	
+	//! Minimum radius for AOI
+	float MinRadius;
+	
+	//! Maximum radius for AOI
+	float MaxRadius;
 	
 	//! AOI should be at least this far from area center
 	int MinimumDistanceFromAreaCenter = 50;
@@ -46,6 +34,11 @@ class TW_CompositionSpawnParameters
 		
 		Compositions = settings;
 		NextSearchPosition = 1.25;
+	}
+	
+	float GetAOIRadius()
+	{
+		return Math.RandomFloatInclusive(MinRadius, MaxRadius);
 	}
 	
 	TW_CompositionSpawnParameters Copy()
@@ -61,6 +54,8 @@ class TW_CompositionSpawnParameters
 		params.NextSearchPosition = NextSearchPosition;
 		params.AreaRadius = AreaRadius;
 		params.AreaCenter = AreaCenter;
+		params.MaxRadius = MaxRadius;
+		params.MinRadius = MinRadius;
 		params.MinimumDistanceFromAreaCenter = MinimumDistanceFromAreaCenter;
 		
 		return params;
@@ -76,7 +71,17 @@ class TW_CompositionPlacementResult
 	TW_CompositionSize CompositionSize;
 	
 	//! Where the position was found
-	vector Position;		
+	vector Position;
+	
+	//! Rotation to apply during placement
+	float Angle;
+	
+	bool IsDefensive;
+	
+	string toString()
+	{
+		return string.Format("TrainWreck:\n\tPrefab: %1\n\tPos: %2\n\tAngle: %3\n\tSize: %4\n", Prefab, Position, Angle, CompositionSize);
+	}
 };
 
 enum TW_AOIFailedReason
@@ -123,8 +128,11 @@ class TW_AreaOfInterestHandler
 	
 	private vector _previousPosition;
 	private vector _areaOfInterestPosition;
+	private float _areaOfInterestRadius;
+	
 	private int _currentAttempt;
 	private int _aoiPlacementAttempt;
+	
 	private TW_AOIFailedReason _failedReason = TW_AOIFailedReason.NONE;
 	
 	static ResourceName SmallZone = "{588A3DAF0296B0C1}PrefabsEditable/Slots/Flat/E_SlotFlatSmall.et";
@@ -175,6 +183,112 @@ class TW_AreaOfInterestHandler
 	private ref array<TW_CompositionType> compositionTypes = {};
 	private TW_CompositionType currentType;
 	
+	private bool HasOverlap(vector search, float radius, notnull array<ref TW_CompositionPlacementResult> results)
+	{
+		foreach(TW_CompositionPlacementResult result : results)
+		{			
+			float dist = vector.Distance(search, result.Position);			
+			if(dist < radius + (float)result.CompositionSize + PADDING)
+				return true;
+		}
+		
+		return false;
+	}
+	
+	private vector RandomPos(vector position, float radius)
+	{
+		float angle = Math.RandomFloatInclusive(0, 359);
+		float x = position[0] + radius * Math.Cos(angle);
+		float y = position[2] + radius * Math.Sin(angle);
+		
+		return Vector(x, 0, y);
+	}
+	
+	private void GetPlacementCircles(notnull out array<ref TW_CompositionPlacementResult> results)
+	{
+		ref array<TW_CompositionType> types = {TW_CompositionType.LARGE, TW_CompositionType.MEDIUM, TW_CompositionType.SMALL, TW_CompositionType.WALLS, TW_CompositionType.BUNKERS};
+		
+		float smallSize = (float)(TW_CompositionSize.SMALL);
+		float mediumSize = (float)(TW_CompositionSize.MEDIUM);
+		float largeSize = (float)(TW_CompositionSize.LARGE);
+		
+		foreach(TW_CompositionType type : types)
+		{
+			int count = GetCountFor(type);
+			if(count == 0)
+				continue;
+				
+			TW_CompositionSize sizeType = GetSize(type);
+			float size = (float)sizeType;
+				
+			float sizeRatio = (float)(size - smallSize) / (largeSize - smallSize);
+			float maxDistance = _areaOfInterestRadius - _parameters.MaxRadius;
+			float minDistance = _areaOfInterestRadius * (1 - sizeRatio);
+						
+			// Random angle for placement
+			float angle;			
+			
+			for(int i = 0; i < count; i++)
+			{
+				int localAttempts = 75;
+				float distanceFromCenter = Math.RandomFloatInclusive(minDistance, maxDistance);	
+				
+				vector newPos = RandomPos(_areaOfInterestPosition, distanceFromCenter);
+				
+				bool overlaps = HasOverlap(newPos, size, results);
+				
+				while(localAttempts > 0 && overlaps)
+				{
+					localAttempts -= 1;
+					newPos = RandomPos(_areaOfInterestPosition, distanceFromCenter);
+					overlaps = HasOverlap(newPos, size, results);
+				}
+			
+				if(overlaps)
+					continue;
+				
+				bool isDefensive = false;
+				if(currentType == TW_CompositionType.WALLS || currentType == TW_CompositionType.BUNKERS)
+				{
+					angle = TW_Util.GetAngleTo(_areaOfInterestPosition, newPos) + Math.RandomFloatInclusive(-45, 45);
+					isDefensive = true;
+				}
+				else 
+					angle = Math.RandomFloatInclusive(0, 359);			
+				
+				ref TW_CompositionPlacementResult result = new TW_CompositionPlacementResult();
+				result.Prefab = GetCompositionPrefab(type);
+				result.Position = newPos;
+				result.CompositionSize = sizeType;
+				result.Angle = angle;
+				result.IsDefensive = isDefensive;
+				PrintFormat("TrainWreck: Pos: %1, Angle: %2, Size: %3", newPos, result.Angle, sizeType);
+				results.Insert(result);
+			}
+		}
+	}
+	
+	private bool GetStartingArea(out vector position, out float radius)
+	{		
+		float searchRadius = _parameters.AreaRadius;
+		
+		position = TW_Util.RandomPositionAround(_parameters.AreaCenter, searchRadius, _parameters.MinimumDistanceFromAreaCenter);				
+		radius =  _parameters.GetAOIRadius();
+		
+		float multiplier = 1.25;
+		for(int i = 0; i < 50; i++)
+		{
+			if(!TW_Util.IsWater(position))
+				break;
+			
+			PrintFormat("TrainWreck: Attempt(%1/50) - %2 is under water", i, position);
+			if(SCR_WorldTools.FindEmptyTerrainPosition(position, _parameters.AreaCenter, searchRadius * (i + multiplier), 25, 10, TraceFlags.ENTS))
+				break;
+		}
+		
+		return true;
+	}
+	
 	bool StartSpawn()
 	{
 		if(_aoiPlacementAttempt <= 0) 
@@ -182,16 +296,56 @@ class TW_AreaOfInterestHandler
 		
 		_placements.Clear();
 		_currentAttempt = _parameters.RetriesPerPlacement;		
-		_aoiPlacementAttempt -= 1;		
-		_areaOfInterestPosition = TW_Util.RandomPositionAround(_parameters.AreaCenter, _parameters.AreaRadius, _parameters.MinimumDistanceFromAreaCenter);
+		_aoiPlacementAttempt -= 1;
+		
+		GetStartingArea(_areaOfInterestPosition, _areaOfInterestRadius);		
 		_previousPosition = _areaOfInterestPosition;
 		
 		SCR_Enum.GetEnumValues(TW_CompositionType, compositionTypes);
 		currentType = compositionTypes.GetRandomElement();
+				
+		GetPlacementCircles(_placements);
 		
-		Next();
+		SpawnNext();
+		// Next();
 		
 		return !_placedEntities.IsEmpty();
+	}
+	
+	private void SpawnNext()
+	{
+		if(_placements.IsEmpty())
+			return;
+		
+		ref TW_CompositionPlacementResult result = _placements.Get(0);
+		
+		ref array<vector> positions = {};
+		
+		float multiplier = 1.25;
+		float searchRadius = (float)result.CompositionSize * 2.5;
+		int foundCount;
+		
+		for(int i = 0; i < 10; i++)
+		{
+			positions.Clear();
+			foundCount = FindOpenAreasForCompositionType(result.Position, searchRadius * (i + multiplier), result.CompositionSize, positions);
+		
+			if(foundCount > 0)
+			{
+				result.Position = positions.GetRandomElement();
+				break;
+			}
+		}
+		
+		if(result.IsDefensive)
+			result.Angle = TW_Util.GetAngleTo(_areaOfInterestPosition, result.Position) + Math.RandomFloatInclusive(-30, 30);
+						
+		positions.Clear();
+		
+		SpawnFromResult(result);		
+		_placements.Remove(0);
+		
+		GetGame().GetCallqueue().CallLater(SpawnNext, SPAWN_DELAY, false);
 	}
 	
 	private TW_CompositionSize GetSize(TW_CompositionType type)
@@ -247,6 +401,11 @@ class TW_AreaOfInterestHandler
 				result.Prefab = GetCompositionPrefab(currentType);
 				result.Position = position;
 				result.CompositionSize = minimum;
+				
+				if(currentType == TW_CompositionType.WALLS || currentType == TW_CompositionType.BUNKERS)
+					result.Angle = Math.RandomFloatInclusive(0, 359); // (Math.Atan2(position[2] - averageZ, position[0] - averageX) * -180 / Math.PI) + Math.RandomFloatInclusive(-45, 45);
+				else
+					result.Angle = Math.RandomFloatInclusive(0, 359);
 				
 				SpawnFromResult(result);
 			}
@@ -370,7 +529,7 @@ class TW_AreaOfInterestHandler
 		params.TransformMode = ETransformMode.WORLD;
 		
 		vector angles = Math3D.MatrixToAngles(params.Transform);
-		angles[0] = Math.RandomFloat(0, 360);
+		angles[0] = result.Angle;
 		Math3D.AnglesToMatrix(angles, params.Transform);
 		
 		Resource resource = Resource.Load(result.Prefab);
@@ -401,7 +560,7 @@ class TW_AreaOfInterestHandler
 	
 	static int FindOpenAreasForCompositionType(vector centerPosition, float radius, TW_CompositionSize size, out notnull array<vector> positions, int maxResults = 20)
 	{
-		int positionCount = SCR_WorldTools.FindAllEmptyTerrainPositions(positions, centerPosition, radius, (int)size, 10, maxResults, TraceFlags.ENTS);
+		int positionCount = SCR_WorldTools.FindAllEmptyTerrainPositions(positions, centerPosition, radius, (int)size + 3, 10, maxResults, TraceFlags.ENTS);
 		
 		EWaterSurfaceType type;
 		float lakeArea;
@@ -427,7 +586,7 @@ class TW_AreaOfInterestHandler
 	
 	static bool FindOpenAreaForComposition(vector centerPosition, float radius, TW_CompositionSize size, out vector position)
 	{
-		bool foundPosition = SCR_WorldTools.FindEmptyTerrainPosition(position, centerPosition, radius, (int)size, (int)size, TraceFlags.ENTS);		
+		bool foundPosition = SCR_WorldTools.FindEmptyTerrainPosition(position, centerPosition, radius, (int)size + 3, (int)size, TraceFlags.ENTS);		
 		
 		if(!foundPosition)
 			return false;

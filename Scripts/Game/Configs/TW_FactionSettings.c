@@ -14,7 +14,7 @@ class TW_FactionCompositions
 	private ref array<ResourceName> m_MediumCompositions;
 	
 	[Attribute("", UIWidgets.ResourceNamePicker, params: "et", desc: "Large Compositions", category: "Large Prefabs")]
-	private ref array<ResourceName> m_LargeCompositions;
+	private ref array<ResourceName> m_LargeCompositions;	
 	
 	bool HasDefensiveWalls() { return !m_DefensiveWalls.IsEmpty(); }
 	bool HasDefensiveBunkers() { return !m_DefensiveBunkers.IsEmpty(); }

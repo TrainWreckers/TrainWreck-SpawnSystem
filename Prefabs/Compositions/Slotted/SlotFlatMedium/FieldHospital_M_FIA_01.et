@@ -1,0 +1,71 @@
+GenericEntity : "{6E9190BC2713551D}Prefabs/Compositions/Slotted/BuildableComposition_Base.et" {
+ ID "5282DCB5DFC8538F"
+ {
+  $grp TW_AISpawnPoint {
+   {
+    ID "64C2E22BF0A9E75E"
+    coords 4.284 0.097 -1.742
+   }
+   {
+    ID "64C2E22BF0B608CD"
+    coords 6.2 1.916 -3.224
+   }
+   {
+    ID "64C2E22BF0B6232F"
+    coords 6.004 1.926 -3.223
+   }
+   {
+    ID "64C2E22BF0B682E6"
+    coords -5.878 0.172 -7.343
+   }
+   {
+    ID "64C2E22BF0B682EE"
+    coords -7.651 0.188 -7.326
+   }
+   {
+    ID "64C2E22BF0B6A008"
+    coords -6.658 0.186 -6.144
+   }
+   {
+    ID "64C2E22BF0B6A010"
+    coords 6.158 2.003 -3.221
+   }
+   {
+    ID "64C2E22BF0B6B127"
+    coords 6.033 2.002 -3.221
+   }
+   {
+    ID "64C2E22BF0B6DCD5"
+    coords 1.114 -0.221 -12.333
+   }
+   {
+    ID "64C2E22BF0B6DD22"
+    coords -0.89 -0.221 -13.571
+   }
+   {
+    ID "64C2E22BF0B75A43"
+    coords 0.83 0.096 -1.808
+   }
+   {
+    ID "64C2E22BF0B76D0C"
+    coords -1.214 -0.221 -10.432
+   }
+   {
+    ID "64C2E22BF0B76D18"
+    coords 2.842 0.022 5.108
+   }
+   {
+    ID "64C2E22BF0B76D22"
+    coords -3.859 0.065 5.449
+   }
+   {
+    ID "64C2E22BF0B76D30"
+    coords -7.566 0.097 -1.64
+   }
+   {
+    ID "64C2E22BF0B76D43"
+    coords -2.984 0.045 -1.802
+   }
+  }
+ }
+}

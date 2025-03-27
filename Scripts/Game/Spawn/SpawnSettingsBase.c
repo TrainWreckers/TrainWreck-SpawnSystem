@@ -4,6 +4,34 @@ class BehaviorSettings
 	int Chance;		
 };
 
+class TW_CompositionSettings
+{
+	bool ShouldSpawnComposition = false;
+	int CompositionAreaCount = 5;
+	
+	ref PercentageFieldSetting BunkerCount;
+	ref PercentageFieldSetting WallCount;
+	ref PercentageFieldSetting LargeCount;
+	ref PercentageFieldSetting MediumCount;
+	ref PercentageFieldSetting SmallCount;		
+	
+	ref PercentageFieldSetting AreaRadius;	
+};
+
+class TW_VehicleSpawnSettings
+{
+	//! Should vehicles (using vehicle spawn points) be enabled
+	bool ShouldSpawnVehicles = false;
+	
+	//! Maximum amount of vehicles 
+	int MaxVehicles = 10;
+	float VehicleChanceToSpawn = 0.2;
+	int DeleteIfMoreThanChunksAway = 3;
+	
+	//! The chances for each vehicle type to spawn around the map
+	ref map<string, float> VehicleTypeChances;
+};
+
 class SpawnSettingsBase
 {
 	//! Type of manager to use
@@ -11,6 +39,13 @@ class SpawnSettingsBase
 	
 	//! Show extensive debug statements
 	bool ShowDebug;
+	
+	bool ShouldSpawnUSPlayerBase;
+	bool ShouldSpawnUSSRPlayerBase;
+	bool ShouldSpawnFIAPlayerBase;	
+	
+	ref TW_CompositionSettings CompositionSettings;
+	ref TW_VehicleSpawnSettings VehicleSpawnSettings;
 	
 	//! Chance a group/unit will spawn outside (instead of inside)
 	float SpawnOutsideChance;
@@ -92,6 +127,14 @@ class SpawnSettingsBase
 		return true;
 	}
 	
+	private static PercentageFieldSetting NewSetting(int min, int max)
+	{
+		ref PercentageFieldSetting setting = new PercentageFieldSetting();
+		setting.Min = min;
+		setting.Max = max;
+		return setting;
+	}
+	
 	private static FactionSpawnSettings GetDefaultFactionSettings(SCR_Faction faction)
 	{
 		ref FactionSpawnSettings factionSettings = new FactionSpawnSettings();
@@ -112,7 +155,7 @@ class SpawnSettingsBase
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendLocal), 90);
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.Attack), 0);
 		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.DefendArea), 2);
-		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.NoWaypoints), 0);
+		factionSettings.Behaviors.Insert(SCR_Enum.GetEnumName(TW_AISpawnBehavior, TW_AISpawnBehavior.NoWaypoints), 0);				
 		
 		SCR_EntityCatalog characterCatlaog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.CHARACTER);
 		SCR_EntityCatalog vehicleCatalog = faction.GetFactionEntityCatalogOfType(EEntityCatalogType.VEHICLE);
@@ -227,6 +270,32 @@ class SpawnSettingsBase
 				settings.AddFaction(GetDefaultFactionSettings(faction));
 			}
 		}
+		
+				
+		ref TW_CompositionSettings compSettings = new TW_CompositionSettings();
+		compSettings.ShouldSpawnComposition = true;
+		compSettings.CompositionAreaCount = 5;
+		compSettings.AreaRadius = NewSetting(25, 50);
+		
+		compSettings.WallCount = NewSetting(2, 10);		
+		compSettings.BunkerCount = NewSetting(1, 4);
+		compSettings.LargeCount = NewSetting(1, 3);
+		compSettings.MediumCount = NewSetting(1, 5);
+		compSettings.SmallCount = NewSetting(1, 5);
+		
+		settings.CompositionSettings = compSettings;
+		
+		ref TW_VehicleSpawnSettings vehicleSettings = new TW_VehicleSpawnSettings();
+		
+		ref array<string> names = {};
+		SCR_Enum.GetEnumNames(TW_VehicleType, names);
+		
+		vehicleSettings.VehicleTypeChances = new map<string, float>();
+		
+		foreach(string name : names)
+			vehicleSettings.VehicleTypeChances.Insert(name, 0.2);
+		
+		settings.VehicleSpawnSettings = vehicleSettings;
 		
 		return settings;
 	}

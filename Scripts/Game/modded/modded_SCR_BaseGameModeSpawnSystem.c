@@ -4,6 +4,34 @@ modded class SCR_BaseGameMode
 	protected ref TW_FactionCompositions m_USSRCompositions;
 	protected ref TW_FactionCompositions m_FIACompositions;
 	
+	protected ref TW_AOIConfig _usPlayerSpawnArea;
+	protected ref TW_AOIConfig _ussrPlayerSpawnArea;
+	protected ref TW_AOIConfig _fiaPlayerSpawnArea;
+	
+	TW_AOIConfig GetUSPlayerSpawnAreaConfig() 
+	{ 
+		if(!_usPlayerSpawnArea)
+			InitializeCompositions();
+		
+		return _usPlayerSpawnArea; 
+	}
+	
+	TW_AOIConfig GetUSSRPlayerSpawnAreaConfig() 
+	{ 
+		if(!_ussrPlayerSpawnArea)
+			InitializeCompositions();
+		
+		return _ussrPlayerSpawnArea; 
+	}
+	
+	TW_AOIConfig GetFIAPlayerSpawnAreaConfig() 
+	{ 
+		if(!_fiaPlayerSpawnArea)
+			InitializeCompositions();
+		
+		return _fiaPlayerSpawnArea; 
+	}
+	
 	TW_FactionCompositions GetFIACompositions() 
 	{ 
 		if(!m_FIACompositions)
@@ -33,6 +61,24 @@ modded class SCR_BaseGameMode
 		m_USCompositions = LoadTWFactionComposition("{0C96E3FCC84E8CD4}Configs/Compositions/TW_US_Compositions.conf");	
 		m_USSRCompositions = LoadTWFactionComposition("{B482220F45A754E6}Configs/Compositions/TW_USSR_Compositions.conf");	
 		m_FIACompositions = LoadTWFactionComposition("{E37B578DE2724443}Configs/Compositions/TW_FIA_Compositions.conf");
+		
+		_fiaPlayerSpawnArea = LoadMustSpawnConfig("{44D46A068C64FC16}Configs/AOI/TW_FIA_PlayerSpawnArea.conf");
+		_usPlayerSpawnArea = LoadMustSpawnConfig("{A85AFC349D1B80B9}Configs/AOI/TW_US_PlayerSpawnArea.conf");
+		_ussrPlayerSpawnArea = LoadMustSpawnConfig("{5C3AA095E0DE6331}Configs/AOI/TW_USSR_PlayerSpawnArea.conf");
+	}
+	
+	private TW_AOIConfig LoadMustSpawnConfig(ResourceName prefab)
+	{
+		Resource configContainer = BaseContainerTools.LoadContainer(prefab);
+		if(!configContainer || !configContainer.IsValid())
+			return null;
+		
+		ref TW_AOIConfig registry = TW_AOIConfig.Cast(BaseContainerTools.CreateInstanceFromContainer(configContainer.GetResource().ToBaseContainer()));
+		
+		if(!registry)
+			PrintFormat("TrainWreck-SpawnSystem: Was unable to load config: %1", prefab, LogLevel.ERROR);
+		
+		return registry;
 	}
 	
 	private TW_FactionCompositions LoadTWFactionComposition(ResourceName prefab)
@@ -73,6 +119,7 @@ modded class SCR_BaseGameMode
 	}
 	
 	private ref TW_AreaOfInterestHandler aoiHandler;
+	private ref TW_RequiredAOIHandler requiredHandler;
 	
 	protected void LoadSpawnManager()
 	{
@@ -125,44 +172,46 @@ modded class SCR_BaseGameMode
 		PrintFormat("TrainWreck-SpawnSystem: callback - Failed to spawn AOI: '%1'", SCR_Enum.GetEnumName(TW_AOIFailedReason, reason), LogLevel.ERROR);
 	}
 	
+	private ref array<ref TW_AreaOfInterestHandler> _handlers = {};
 	private void Test()
 	{
-		int count = 15;
-		vector center = Vector(3219.106, 0, 1497.673);
-		for(int i = 0; i < count; i++)
+		if(!TW_SpawnManagerBase.GetInstance().GetSettings().CompositionSettings.ShouldSpawnComposition)
+			return;
+		
+		ref TW_CompositionSettings settings = TW_SpawnManagerBase.GetInstance().GetSettings().CompositionSettings;
+		
+		for(int i = 0; i < settings.CompositionAreaCount; i++)
 		{
 			ref TW_CompositionSpawnParameters params = new TW_CompositionSpawnParameters(GetUSSRCompositions());
 			ref TW_MapLocation location = m_MapManager.GetRandomLocation();
 			
 			PrintFormat("TrainWreck: Spawning around: %1", WidgetManager.Translate(location.LocationName()));
 			
-			params.AreaCenter = center; // location.GetPosition();
-			params.AreaRadius = 120; //(m_MapManager.settings.GetConfigType(location.LocationType()).radius * 2) * m_MapManager.settings.gridSize;
+			params.AreaCenter = location.GetPosition();
+			params.AreaRadius = (m_MapManager.settings.GetConfigType(location.LocationType()).radius * 2 ) * m_MapManager.settings.gridSize;
+			params.MinimumDistanceFromAreaCenter = Math.RandomFloatInclusive(20, 100);
+			
+			params.MinRadius = settings.AreaRadius.Min;
+			params.MaxRadius = settings.AreaRadius.Max;
+			
 			params.RetriesPerPlacement = 5;
 			
-			params.SmallCompositions = Math.RandomIntInclusive(1, 5);
-			params.MediumCompositions = Math.RandomIntInclusive(1, 5);
-			params.LargeCompositions = Math.RandomIntInclusive(0, 3);
-			params.DefensiveWalls = Math.RandomIntInclusive(1, 6);
-			params.DefensiveBunkers = Math.RandomIntInclusive(1, 5);
-			params.MinimumDistanceFromAreaCenter = 25;
-			params.NextSearchPosition = 3.5;				
+			params.SmallCompositions = settings.SmallCount.GetRandomPercentage();
+			params.MediumCompositions = settings.MediumCount.GetRandomPercentage();
+			params.LargeCompositions = settings.LargeCount.GetRandomPercentage();
+			params.DefensiveWalls = settings.WallCount.GetRandomPercentage();
+			params.DefensiveBunkers = settings.BunkerCount.GetRandomPercentage();
+			params.NextSearchPosition = 1.25;
 			
-			aoiHandler = new TW_AreaOfInterestHandler(params);
+			aoiHandler = TW_AreaOfInterestHandler(params);
 			aoiHandler.GetOnAOIFailed().Insert(FailedReason);
 			aoiHandler.GetOnCompositionPlacementFailed().Insert(OnInvalidPlacement);
 			aoiHandler.GetOnCompositionPlacementSuccess().Insert(OnSuccessPlacement);
 			
 			if(aoiHandler.StartSpawn())
-			{
-				PrintFormat("TrainWreck: Successfully spawned something");
-				break;
-			}
-			else 
-				PrintFormat("TrainWreck: Iteration %1 of composition spawning", i, LogLevel.ERROR);
+				PrintFormat("TrainWreck: Successfully spawned something");			
 			
-			aoiHandler.Delete();
-			delete aoiHandler;
+			_handlers.Insert(aoiHandler);			
 		}
 	}
 }
