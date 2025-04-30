@@ -29,6 +29,27 @@ class TW_SchemaManager<Class T>
 {
 	private ref map<string, ref TW_SchemaBasic> classMap = new map<string, ref TW_SchemaBasic>();
 	
+	map<string, ref TW_SchemaBasic> GetSchemaClassMap()
+	{
+		return classMap;
+	}
+	
+	int GetVariableNames(notnull out array<string> names)
+	{
+		int i = 0, count = classMap.Count();
+		foreach(string key, TW_SchemaBasic _ : classMap)
+			names.Insert(key);
+		return count;
+	}
+	
+	TW_SchemaBasic GetSchemaForVariable(string variableName)
+	{
+		if(!classMap.Contains(variableName))
+			return null;
+		
+		return classMap.Get(variableName);
+	}
+	
 	private void AnalyzeClass()
 	{
 		typename t = T;

@@ -1,18 +1,16 @@
-class TW_Layout_SpawnSettings : MenuBase
+class TW_Layout_SpawnSettings : TW_BaseMenu
 {
-	protected static const string CONTENT_AREA = "ContentArea";
-	
-	protected static const string WIDGET_STRING_PREFAB = "";
-	protected static const string WIDGET_INTEGER_PREFAB = "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout";
-	protected static const string WIDGET_FLOAT_PREFAB = "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout";
-	protected static const string WIDGET_ENUM_PREFAB = "";
-	protected static const string WIDGET_BOOL_PREFAB = "{5D5055E10FD00549}UI/layouts/WidgetLibrary/ToolBoxes/WLib_Checkbox.layout";
-	protected static const string WIDGET_FLAGS_PREFAB = "";
-	
-	private Widget _contentAreaWidget;
-	private Widget _rootWidget;
-	
 	private ref map<string, SCR_ChangeableComponentBase> _fieldMap = new map<string, SCR_ChangeableComponentBase>();
+	
+	/*!
+		Should only ever need to instantiate this once during the engine's lifetime.
+		Saves a bit of performance as well, since we won't have to parse the spec-file each time
+		the menu is opened.
+	*/
+	private static ref TW_SchemaManager<SpawnSettingsBase> _spawnSettings;
+	private ref SpawnSettingsBase settings = new SpawnSettingsBase();
+	
+	override string GetSchemaPath() { return "Schemas/TrainWreckSchema.json"; }	
 	
 	protected override void OnMenuOpen()
 	{
@@ -21,6 +19,33 @@ class TW_Layout_SpawnSettings : MenuBase
 		// Get content area
 		_contentAreaWidget = _rootWidget.FindWidget(CONTENT_AREA);
 		
+		if(!_spawnSettings)
+		{
+			_spawnSettings = new TW_SchemaManager<SpawnSettingsBase>();
+			_spawnSettings.LoadSchemaFromPath(GetSchemaPath());
+		}
 		
+		ref map<string, ref TW_SchemaBasic> classMap = _spawnSettings.GetSchemaClassMap();
+		
+		foreach(string varName, ref TW_SchemaBasic schema : classMap)
+		{
+			string prefabFor = GetWidgetTypeFor(schema.type);
+			
+			if(!prefabFor)
+			{
+				PrintFormat("TrainWreck: Prefab for type '%1' was not found. Skipping var %2", schema.type, varName, LogLevel.WARNING);
+				continue;
+			}
+			
+			Widget widgetPrefab = GetGame().GetWorkspace().CreateWidgets(prefabFor, _contentAreaWidget);
+			
+			if(!widgetPrefab)
+			{
+				PrintFormat("TrainWreck: Was unable to create widget for type '%1', %2'", schema.type, varName, LogLevel.ERROR);
+				continue;
+			}
+			
+			
+		}
 	}
 };
