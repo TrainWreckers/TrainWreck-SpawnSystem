@@ -38,14 +38,13 @@ class TW_SchemaManager<Class T>
 		for(int i = 0; i < varCount; i++)
 		{
 			string varname = t.GetVariableName(i);
-			classMap.Set(varname, null);			
+			classMap.Set(varname, null);
 		}
 	}
 	
 	void LoadSchemaFromPath(string path)
 	{
 		AnalyzeClass();
-		/*
 		
 		V30_Json_FileDeserializer serializer = new V30_Json_FileDeserializer(path);
 		serializer.Open(path);
@@ -58,14 +57,11 @@ class TW_SchemaManager<Class T>
 		
 		ref V30_Json_Value root = serializer.Deserialize();
 		
-		PrintFormat("TrainWreck: %1", root);
-		
 		ref V30_Json_object rootObject = root.AsObject();
-		
-		ref V30_Json_string title = rootObject.GetAt("title").AsString();
+		ref V30_Json_string title = rootObject.GetAt("title").AsString();		
 		ref V30_Json_string description = rootObject.GetAt("description").AsString();
 		
-		PrintFormat("TrainWreck: Loading schema\n\tTitle: %1\n\tDesc: %2", title, description);
+		PrintFormat("TrainWreck: loading schema\n\tTitle: %1\n\tDesc: %2", title.Get(), description.Get());
 		
 		ref V30_Json_object propertiesValue = rootObject.GetAt("properties").AsObject();
 		ref map<string, ref V30_Json_Value> properties = propertiesValue.Get();
@@ -78,19 +74,19 @@ class TW_SchemaManager<Class T>
 			
 			ref TW_SchemaBasic schema = new TW_SchemaBasic();
 			
-			schema.title = fieldProperties.Get("title").ToString();
-			schema.description = fieldProperties.Get("description").ToString();
-			schema.type = fieldProperties.Get("type").ToString();
+			schema.title = fieldProperties.Get("title").AsString().Get();
+			schema.description = fieldProperties.Get("description").AsString().Get();
+			schema.type = fieldProperties.Get("type").AsString().Get();
 			
 			if(fieldProperties.Contains("default"))
-				schema.defaultValue = fieldProperties.Get("default").ToString();
+				schema.defaultValue = fieldProperties.Get("default").AsString().Get();
 			
 			if(fieldProperties.Contains("ui"))
 			{
 				V30_Json_object uiObject = fieldProperties.Get("ui").AsObject();
 				ref map<string, ref V30_Json_Value> uiProps = uiObject.Get();
 				
-				string uiType = uiProps.Get("type").ToString();				
+				string uiType = uiProps.Get("type").AsString().Get();
 				uiType.ToLower();
 				
 				if(uiType == "slider")
@@ -100,24 +96,30 @@ class TW_SchemaManager<Class T>
 					slider.type = uiType;
 					
 					if(uiProps.Contains("min"))
-					{
-						V30_Json_int intVal = uiProps.Get("min").AsInt();
-						slider.min = intVal.Get();
-					}
-					else slider.min = 0;
+						slider.min = uiProps.Get("min").AsInt().Get();
+					else 
+						slider.min = 0;
 					
 					if(uiProps.Contains("max"))
-					{
-						V30_Json_int intVal = uiProps.Get("max").AsInt().Get();
-					}
+						slider.max = uiProps.Get("max").AsInt().Get();
+					else 
+						slider.max = int.MAX;
+					
+					if(uiProps.Contains("step"))
+						slider.step = uiProps.Get("step").AsInt().Get();
+					else 
+						slider.step = 1;
+					
+					if(uiProps.Contains("format"))
+						slider.format = uiProps.Get("format").AsString().Get();
+					else 
+						slider.format = "%1";
+					
+					schema.uiInfo = slider;
 				}
 			}
-		
-		}*/
-	}
-	
-	private void LoadSchemaInfo(V30_Json_object jsonObject)
-	{
-		
+			
+			classMap.Set(key, schema);
+		}		
 	}
 };
