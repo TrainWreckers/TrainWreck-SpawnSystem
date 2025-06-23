@@ -97,10 +97,10 @@ modded class SCR_BaseGameMode
 	
 	protected override void InitializePositionMonitor()
 	{
-	 	if(!TW_Global.IsServer(this))
+	 	if(!Replication.IsServer())
 			return;
 		
-		SpawnSettingsBase settings = m_SpawnManager.GetSettings();
+		SpawnSettingsBase settings = m_SpawnManager.GetInstance().GetSettings();
 		
 		positionMonitor = new TW_MonitorPositions(settings.SpawnGridSize, settings.SpawnDistanceInChunks, settings.AntiSpawnGridSize, settings.AntiSpawnDistanceInChunks);
 		m_PositionMonitorUpdateInterval = 2.0;

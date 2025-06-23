@@ -1,0 +1,82 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ components {
+  TW_ItemChance_MenuHandler "{65AE224F10225CC9}" {
+  }
+ }
+ {
+  PanelWidgetClass "{65652BDDAA10ADC1}" {
+   Name "Panel0"
+   Slot FrameWidgetSlot "{65652BDDAA10ADD6}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 100
+    OffsetRight -100
+    SizeY 30
+    OffsetBottom -30
+    SizeToContent 1
+   }
+   {
+    ButtonWidgetClass "{65AE1770EB7F0A4E}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
+     Name "ItemSlider"
+     Slot FrameWidgetSlot "{65AE1770EB7F0A64}" {
+      PositionX 141.079
+      OffsetLeft 141.079
+      PositionY 56.989
+      OffsetTop 56.989
+      SizeX 312.842
+      OffsetRight -453.921
+      SizeY 56
+      OffsetBottom -112.989
+     }
+     components {
+      SCR_SliderComponent "{548294960C7399D9}" {
+       m_sLabel "Chance"
+       m_fValue 0
+       m_fMaxValue 100
+       m_fStep 1
+       m_sFormatText "%1"
+      }
+     }
+    }
+    TextWidgetClass "{65652BDDA07CE2F8}" {
+     Name "ItemName"
+     Slot FrameWidgetSlot "{65652BDDA07CE2CC}" {
+      PositionX 153.526
+      OffsetLeft 153.526
+      PositionY 8.94
+      OffsetTop 8.94
+      SizeX 514.367
+      OffsetRight -667.893
+      SizeY 30
+      OffsetBottom -38.94
+      SizeToContent 1
+     }
+    }
+    SizeLayoutWidgetClass "{65652BDCE0EE6BC2}" {
+     Name "SizeLayout0"
+     Slot FrameWidgetSlot "{65652BDCE0EE33C0}" {
+      PositionX 6.783
+      OffsetLeft 6.783
+      PositionY 4.522
+      OffsetTop 4.522
+      SizeX 125.432
+      OffsetRight -132.215
+      SizeY 106.889
+      OffsetBottom -111.411
+     }
+     {
+      ImageWidgetClass "{65AE1770BBC14272}" {
+       Name "ItemImage"
+       Slot AlignableSlot "{65AE1770AF76C029}" {
+       }
+       Size 120 120
+      }
+     }
+    }
+   }
+  }
+ }
+}

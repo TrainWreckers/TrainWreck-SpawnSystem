@@ -1,5 +1,9 @@
 FrameWidgetClass {
  Name "rootFrame"
+ components {
+  TW_FactionSpawnSettings_MenuHandler "{65ACC2EE26150E44}" {
+  }
+ }
  {
   HorizontalLayoutWidgetClass "{64CE308603DFF692}" {
    Name "Window"
@@ -12,42 +16,6 @@ FrameWidgetClass {
     OffsetRight 0
     SizeY 0
     OffsetBottom 0
-   }
-   components {
-    SCR_ContentBrowserEditorUIComponent "{56F2EADC80D7C23A}" {
-     m_iRows 3
-     m_iColumns 5
-     m_sContentName "BrowserGrid"
-     m_sButtonPrevName "PrevButton"
-     m_sButtonNextName "NextButton"
-     m_sPageIndexVisualName "Pages"
-     m_bMustHoverOverContent 1
-     m_aEmptyItemLayouts {
-      "{813B1BA20FAA2750}UI/layouts/Editor/ContentBrowser/ContentBrowser_AssetCard_Empty.layout"
-     }
-     m_bHideArrowsIfDisabled 0
-     m_aCardPrefabs {
-      SCR_ContentBrowserEditorCard "{571A8D02665763D3}" {
-       m_sPrefab "{2656DC617308821A}UI/layouts/Editor/ContentBrowser/ContentBrowser_AssetCard.layout"
-      }
-      SCR_ContentBrowserEditorCard "{58D089D035BE28FE}" {
-       m_EntityType SYSTEM
-       m_sPrefab "{5E3FA008300C1B21}UI/layouts/Editor/ContentBrowser/ContentBrowser_AssetCard_System.layout"
-      }
-     }
-     m_sEmptyCardPrefab "{813B1BA20FAA2750}UI/layouts/Editor/ContentBrowser/ContentBrowser_AssetCard_Empty.layout"
-     m_sUndefinedCardPrefab "{813B1BA20FAA2750}UI/layouts/Editor/ContentBrowser/ContentBrowser_AssetCard_Empty.layout"
-     m_sLabelComponentWidget "FilterSegment"
-     m_sNoFilterResultsWidgetName "NoResults"
-     m_sResetFiltersButtonName "ResetButton"
-     m_sSearchEditBoxName "EditBoxSearch"
-     m_sContentLoadingWidgetName "LoadingVisuals"
-     m_sToggleCardFilterButton "FocusSwitchButton"
-     m_sToggleSearchButton "SearchButton"
-    }
-    SCR_ContentBrowserStateManagerEditorUIComponent "{59F49D59D4E43A6E}" {
-     m_iActiveFiltersVisibleOnTab 2
-    }
    }
    {
     OverlayWidgetClass "{64CE308603DFF690}" {
@@ -119,12 +87,57 @@ FrameWidgetClass {
            }
            "Fill Origin" Center
            {
-            TextWidgetClass "{64CE308603DEDDD0}" : "{9D643D214767D616}UI/layouts/WidgetLibrary/TextWidgets/Text_Heading2.layout" {
-             Name "Title"
-             Slot LayoutSlot "{56EEDE046853BD3D}" {
-              Padding 0 0 0 12
+            HorizontalLayoutWidgetClass "{65AEA9AD8A392B1C}" {
+             Name "HorizontalLayout1"
+             Slot LayoutSlot "{65AEA9AD8A392B2A}" {
              }
-             Text "Train Wreck Settings"
+             {
+              TextWidgetClass "{64CE308603DEDDD0}" : "{9D643D214767D616}UI/layouts/WidgetLibrary/TextWidgets/Text_Heading2.layout" {
+               Name "Title"
+               Slot LayoutSlot "{56EEDE046853BD3D}" {
+                Padding 0 0 0 12
+               }
+               Text "Train Wreck Settings"
+              }
+              HorizontalLayoutWidgetClass "{65AEA9AE1104DC73}" {
+               Name "HorizontalLayout0"
+               Slot LayoutSlot "{65AEA9AE1104DC94}" {
+                SizeMode Fill
+               }
+              }
+              ButtonWidgetClass "{65AEA9AD9DAFCF6D}" : "{0114A06AD44D49BD}UI/layouts/WidgetLibrary/Buttons/DialogButtonCancel.layout" {
+               Name "SaveButton"
+               Slot LayoutSlot "{5CC2F7A314C9440B}" {
+                HorizontalAlign 1
+               }
+               components {
+                SCR_InputButtonComponent "{5D346C3DD81D95CD}" {
+                 m_sLabel "Save & Exit"
+                }
+               }
+              }
+              ButtonWidgetClass "{65AEA9A082B90B26}" : "{51898FF369FE5EB8}UI/layouts/WidgetLibrary/Buttons/DialogButtonConfirm.layout" {
+               Name "ResetButton"
+               Slot LayoutSlot "{5CC2F7A314C9440B}" {
+               }
+               components {
+                SCR_InputButtonComponent "{5D346C3DD81D95CD}" {
+                 m_sLabel "Reset to Default"
+                }
+               }
+               {
+                HorizontalLayoutWidgetClass "{5DB89B776AA9CEFF}" {
+                 Prefab "{5DB89B776AA9CEFF}"
+                 {
+                  RichTextWidgetClass "{5DB89B776317E2A7}" {
+                   Prefab "{5DB89B776317E2A7}"
+                   Text "Reset to Default"
+                  }
+                 }
+                }
+               }
+              }
+             }
             }
             ImageWidgetClass "{64CE308603DECC7B}" {
              Name "UpperStripe"
@@ -135,193 +148,35 @@ FrameWidgetClass {
              Image ""
              Size 128 2
             }
-            VerticalLayoutWidgetClass "{64D56D008744D05D}" {
-             Name "ContentArea"
-             Slot LayoutSlot "{64D56D008744D079}" {
+            HorizontalLayoutWidgetClass "{65AE224A8F992549}" {
+             Name "HorizontalLayout0"
+             Slot LayoutSlot "{65AE224A8F99256A}" {
               SizeMode Fill
              }
              {
-              ButtonWidgetClass "{64D7592A03DE554E}" : "{5D5055E10FD00549}UI/layouts/WidgetLibrary/ToolBoxes/WLib_Checkbox.layout" {
-               Name "ShowDebugCheckBox"
-               Slot LayoutSlot "{64D7592A03DE555E}" {
-                HorizontalAlign 3
-                Padding 2 2 2 2
+              ScrollLayoutWidgetClass "{65ACC2FD0C0800B5}" {
+               Name "ScrollLayout0"
+               Slot LayoutSlot "{65ACC2FD0C0800D5}" {
+                SizeMode Fill
                }
-               components {
-                SCR_CheckboxComponent "{546A9B7B0A8AD927}" {
-                 m_sLabel "Show Debug Messages"
+               {
+                VerticalLayoutWidgetClass "{64D56D008744D05D}" {
+                 Name "ContentArea"
+                 Slot AlignableSlot "{65AE224AFB84F56C}" {
+                 }
                 }
                }
               }
-              ButtonWidgetClass "{64DD334B46A98C12}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "SpawnIntervalInSecondsSlider"
-               Slot LayoutSlot "{64DD334B46A98C3A}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
+              ScrollLayoutWidgetClass "{65AE224AE01791AF}" {
+               Name "ScrollLayout1"
+               Slot LayoutSlot "{65AE224AE01791CE}" {
+                SizeMode Fill
                }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Spawn Interval In Seconds"
-                 m_fValue 2
-                 m_fMinValue 2
-                 m_fMaxValue 120
-                 m_fStep 1
-                 m_sFormatText "%1 Seconds"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334B864A41FA}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "SpawnDistanceInChunksSlider"
-               Slot LayoutSlot "{64DD334B864A4222}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Spawn Distance in Chunks"
-                 m_fValue 3
-                 m_fMinValue 1
-                 m_fMaxValue 50
-                 m_fStep 1
-                 m_sFormatText "%1"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334BEE593E71}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "SpawnGridSizeInMetersSlider"
-               Slot LayoutSlot "{64DD334BEE593EB1}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Spawn Grid Size in Meters"
-                 m_fValue 250
-                 m_fMinValue 10
-                 m_fMaxValue 5000
-                 m_fStep 10
-                 m_sFormatText "%1 meters"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334A1601E5AA}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "AntiSpawnDistanceInChunksSlider"
-               Slot LayoutSlot "{64DD334A1601E5DF}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Antispawn Distance in Chunks"
-                 m_fValue 2
-                 m_fMinValue 1
-                 m_fMaxValue 20
-                 m_fStep 1
-                 m_sFormatText "%1"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334A570BC1BD}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "AntiSpawnGridSizeInMetersSlider"
-               Slot LayoutSlot "{64DD334BEE593EB1}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Antispawn Grid Size in Meters"
-                 m_fValue 150
-                 m_fMinValue 10
-                 m_fMaxValue 5000
-                 m_fStep 10
-                 m_sFormatText "%1 meters"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334AB6955B33}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "GarbageCollectionTimerInSecondsSlider"
-               Slot LayoutSlot "{64DD334AB6955B65}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Garbage Collection Timer in Seconds"
-                 m_fValue 1
-                 m_fMinValue 2
-                 m_fMaxValue 500
-                 m_fStep 1
-                 m_sFormatText "%1 seconds"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334AF17A6B61}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "MaxGroupSizeSlider"
-               Slot LayoutSlot "{64DD334AF17A6B96}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Max Group Size"
-                 m_fValue 3
-                 m_fMinValue 1
-                 m_fMaxValue 5
-                 m_fStep 1
-                 m_sFormatText "%1"
-                }
-               }
-              }
-              ButtonWidgetClass "{64DD334AE62CF1B0}" : "{4A41296C0E9A889F}UI/layouts/WidgetLibrary/WLib_Slider.layout" {
-               Name "WanderIntervalInSecondsSlider"
-               Slot LayoutSlot "{64DD334AF17A6B96}" {
-                HorizontalAlign 3
-                Padding 4 4 4 4
-               }
-               components {
-                SCR_SliderComponent "{548294960C7399D9}" {
-                 m_sLabel "Wander Interval In Seconds"
-                 m_fValue 60
-                 m_fMinValue 20
-                 m_fMaxValue 500
-                 m_fStep 1
-                 m_sFormatText "%1"
-                }
-               }
-              }
-              ButtonWidgetClass "{64D7592A76F102EE}" : "{5D5055E10FD00549}UI/layouts/WidgetLibrary/ToolBoxes/WLib_Checkbox.layout" {
-               Name "ShouldSpawnUSPlayerBaseCheckBox"
-               Slot LayoutSlot "{64D7592A03DE555E}" {
-                HorizontalAlign 3
-                Padding 2 2 2 2
-               }
-               components {
-                SCR_CheckboxComponent "{546A9B7B0A8AD927}" {
-                 m_sLabel "Should Spawn US Player Base"
-                }
-               }
-              }
-              ButtonWidgetClass "{64D7592A6C3AA738}" : "{5D5055E10FD00549}UI/layouts/WidgetLibrary/ToolBoxes/WLib_Checkbox.layout" {
-               Name "ShouldSpawnUSSRPlayerBaseCheckBox"
-               Slot LayoutSlot "{64D7592A03DE555E}" {
-                HorizontalAlign 3
-                Padding 2 2 2 2
-               }
-               components {
-                SCR_CheckboxComponent "{546A9B7B0A8AD927}" {
-                 m_sLabel "Should Spawn USSR Player Base"
-                }
-               }
-              }
-              ButtonWidgetClass "{64D7592A54C3A470}" : "{5D5055E10FD00549}UI/layouts/WidgetLibrary/ToolBoxes/WLib_Checkbox.layout" {
-               Name "ShouldSpawnFIAPlayerBaseCheckBox"
-               Slot LayoutSlot "{64D7592A03DE555E}" {
-                HorizontalAlign 3
-                Padding 2 2 2 2
-               }
-               components {
-                SCR_CheckboxComponent "{546A9B7B0A8AD927}" {
-                 m_sLabel "Should Spawn FIA Player Base"
+               {
+                VerticalLayoutWidgetClass "{65AE224AE878206B}" {
+                 Name "SettingsPane"
+                 Slot AlignableSlot "{65AE224AE8782083}" {
+                 }
                 }
                }
               }

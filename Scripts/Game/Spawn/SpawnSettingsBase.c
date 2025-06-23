@@ -85,8 +85,123 @@ class SpawnSettingsBase
 	
 	int WanderIntervalInSeconds;
 	
+	void SetShouldSpawnUSPlayerBase(bool value)
+	{
+		ShouldSpawnUSPlayerBase = value;
+		m_OnChanged.Invoke("ShouldSpawnUSPlayerBase");
+		SetDirty();
+	}
+	
+	void SetShouldSpawnUSSRPlayerBase(bool value)
+	{
+		ShouldSpawnUSSRPlayerBase = value;
+		m_OnChanged.Invoke("ShouldSpawnUSSRPlayerBase");
+		SetDirty();
+	}
+	
+	void SetShouldSpawnFIAPlayerBase(bool value)
+	{
+		ShouldSpawnFIAPlayerBase = value;
+		m_OnChanged.Invoke("ShouldSpawnFIAPlayerBase");
+		SetDirty();
+	}
+	
+	void SetShowDebug(bool value)
+	{
+		ShowDebug = value;
+		m_OnChanged.Invoke("ShowDebug");
+		SetDirty();
+	}
+	
+	void SetWanderIntervalInSeconds(int value)
+	{
+		WanderIntervalInSeconds = value;
+		m_OnChanged.Invoke("WanderIntervalInSeconds");
+		SetDirty();
+	}
+	
+	void SetGroupSize(int value)
+	{
+		GroupSize = value;
+		m_OnChanged.Invoke("GroupSize");
+		SetDirty();
+	}
+	
+	void SetGarbageCollectionTimerInSeconds(int value)
+	{
+		GarbageCollectionTimerInSeconds = value;
+		m_OnChanged.Invoke("GarbageCollectionTimerInSeconds");
+		SetDirty();
+	}
+	
+	
+	void SetAntiSpawnGridSize(int value)
+	{
+		AntiSpawnGridSize = value;
+		m_OnChanged.Invoke("AntiSpawnGridSize");
+		SetDirty();
+	}
+	
+	
+	void SetAntiSpawnDistanceInChunks(int value)
+	{
+		AntiSpawnDistanceInChunks = value;
+		m_OnChanged.Invoke("AntiSpawnDistanceInChunks");
+		SetDirty();
+	}
+	
+	
+	void SetSpawnGridSize(int value)
+	{
+		SpawnGridSize = value;
+		m_OnChanged.Invoke("SpawnGridSize");
+		SetDirty();
+	}
+	
+	
+	void SetSpawnDistanceInChunks(int value)
+	{
+		SpawnDistanceInChunks = value;
+		m_OnChanged.Invoke("SpawnDistanceInChunks");
+		SetDirty();
+	}
+	
+	void SetSpawnTimerInSeconds(int value)
+	{
+		SpawnTimerInSeconds = value;
+		m_OnChanged.Invoke("SpawnTimerInSeconds");
+		SetDirty();
+	}	
+	
+	void SetDebug(bool value)
+	{
+		ShowDebug = value;
+		m_OnChanged.Invoke("ShowDebug");
+		SetDirty();
+	}
+	
+	[NonSerialized()]
+	static bool IsDirty = false;
+	
+	private void Save()
+	{
+		SaveToFile(this);
+		IsDirty = false;
+	}
+	
+	private void SetDirty()
+	{
+		if(IsDirty) false;
+		IsDirty = true;
+		GetGame().GetCallqueue().CallLater(Save, 1000);
+	}
+	
 	//! Settings per faction
 	ref array<ref FactionSpawnSettings> FactionSettings;		
+	
+	[NonSerialized()]
+	private ref ScriptInvoker<string> m_OnChanged = new ScriptInvoker();
+	ScriptInvoker<string> GetOnChanged() { return m_OnChanged; }
 	
 	void SetData(string type,
 				 int spawnTimer,
@@ -241,7 +356,7 @@ class SpawnSettingsBase
 		}
 	}
 	
-	private static SpawnSettingsBase GetDefault()
+	static SpawnSettingsBase GetDefault()
 	{
 		PrintFormat("TrainWreck: SpawnSettingsBase -> Loading Default Settings", LogLevel.WARNING);
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
@@ -302,9 +417,9 @@ class SpawnSettingsBase
 	
 	static SpawnSettingsBase LoadFromFile()
 	{
-		SCR_JsonLoadContext loadContext = new SCR_JsonLoadContext();
+		SCR_JsonLoadContext loadContext = TW_Util.LoadJsonFile(FILENAME, true);
 		
-		if(!loadContext.LoadFromFile(FILENAME))
+		if(!loadContext)
 		{
 			PrintFormat("TrainWreck: SpawnSettingsBase -> Failed to load settings from: %1", FILENAME, LogLevel.ERROR);
 			ref SpawnSettingsBase settings = GetDefault();
@@ -314,10 +429,9 @@ class SpawnSettingsBase
 		
 		PrintFormat("TrainWreck: SpawnSettingsBase -> Successfully loaded spawnSettings.json");
 		
-		ref SpawnSettingsBase settings = new SpawnSettingsBase();
-		SCR_JsonLoadContext context = TW_Util.LoadJsonFile(FILENAME, true);
+		ref SpawnSettingsBase settings = new SpawnSettingsBase();		
 		
-		if(!context.ReadValue("", settings))
+		if(!loadContext.ReadValue("", settings))
 		{
 			PrintFormat("TrainWreck: SpawnSettingsBase -> Loading settings failed", LogLevel.ERROR);
 			return null;

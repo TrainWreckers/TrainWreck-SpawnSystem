@@ -147,8 +147,19 @@ class TW_SpawnManagerBase
 			return false;
 		
 		return m_SpawnSettings.ShowDebug;
-	}	
+	}
 	
+	private ref set<string> __spawnGridKeys = new set<string>();
+	private ref set<string> __antiGridKeys = new set<string>();
+		
+	protected void OnSettingsChanged(string key)
+	{
+		if(key == "SpawnGridSize")
+		{
+			TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
+			TW_VehicleSpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
+		}	
+	}
 	
 	private void PrintSettings()
 	{
@@ -166,17 +177,27 @@ class TW_SpawnManagerBase
 		}
 	}
 	
-	void Init(SCR_BaseGameMode gameMode)
+	private bool hasInitialized = false;
+	void LoadSettingsFromFile(SpawnSettingsBase overrideSettings = null)
 	{
-		s_Instance = this;
-		m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
-		m_GameMode = gameMode;
+		m_FactionBehaviorWeights.Clear();
+		m_FactionChances.Clear();
+		m_Spawnables.Clear();
+		m_FactionSettings.Clear();
+		m_EnabledFactions.Clear();
+		
+		if(overrideSettings)
+			m_SpawnSettings = overrideSettings;
+		else
+			m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
 		
 		if(!m_SpawnSettings)
 		{
 			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
 			return;
 		}
+		
+		m_SpawnSettings.GetOnChanged().Insert(OnSettingsChanged);
 		
 		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
 		{
@@ -274,7 +295,18 @@ class TW_SpawnManagerBase
 				PrintFormat("TrainWreck: TW_SpawnManagerBase: '%1' Enabled: %2", settings.FactionName, settings.IsEnabled);	
 			}
 		
-		gameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
+		if(!hasInitialized)
+		{
+			m_GameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
+			hasInitialized = true;
+		}
+	}
+	
+	void Init(SCR_BaseGameMode gameMode)
+	{
+		s_Instance = this;
+		m_GameMode = gameMode;
+		LoadSettingsFromFile();
 		SpawnPlayerBases();
 	}
 	
