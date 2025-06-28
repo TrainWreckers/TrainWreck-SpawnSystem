@@ -38,7 +38,7 @@ class TW_SpawnSettings_MenuAction : TW_SpawnSettings_ScriptedUserAction
 			return;
 		}
 		
-		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.TW_SpawnSettings);
+		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.TW_SpawnSettingsMenuUI);
 	}
 	
 	override bool GetActionNameScript(out string outName)
@@ -61,7 +61,7 @@ class TW_SpawnSettings_DialogAction : TW_SpawnSettings_ScriptedUserAction
 			return;
 		}
 		
-		GetGame().GetMenuManager().OpenDialog(ChimeraMenuPreset.TW_SpawnSettings, DialogPriority.INFORMATIVE, 0, true);
+		GetGame().GetMenuManager().OpenDialog(ChimeraMenuPreset.TW_SpawnSettingsMenuUI, DialogPriority.INFORMATIVE, 0, true);
 	}
 	
 	override bool GetActionNameScript(out string outName)

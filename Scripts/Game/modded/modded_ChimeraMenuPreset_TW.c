@@ -1,4 +1,4 @@
 modded enum ChimeraMenuPreset
 {
-	TW_SpawnSettings
+	TW_SpawnSettingsMenuUI
 };

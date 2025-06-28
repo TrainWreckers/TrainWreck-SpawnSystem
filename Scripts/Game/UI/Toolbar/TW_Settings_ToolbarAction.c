@@ -29,10 +29,6 @@ class TW_Settings_ToolbarAction : SCR_EditorToolbarAction
 		if(playerController)
 			playerID = playerController.GetPlayerId();
 		
-		
-		Widget widget = GetGame().GetWorkspace().CreateWidgets("{11DFF8493E5F6F83}UI/SpawnSettingsLayout.layout"); //.OpenMenu(ChimeraMenuPreset.TW_SpawnSettings);
-		TW_FactionSpawnSettings_MenuHandler handler = TW_FactionSpawnSettings_MenuHandler.Cast(widget.FindHandler(TW_FactionSpawnSettings_MenuHandler));
-		
-		handler.Initialize(TW_SpawnManagerBase.GetInstance().GetSettings());
+		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.TW_SpawnSettingsMenuUI);
 	}
 }

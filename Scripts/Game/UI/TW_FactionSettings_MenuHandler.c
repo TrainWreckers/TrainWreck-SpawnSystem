@@ -17,6 +17,12 @@ class TW_FactionSettings_MenuHandler : SCR_ScriptedWidgetComponent
 	{
 		super.HandlerAttached(w);		
 		m_Root = w;
+		GetGame().GetInputManager().ActivateContext("TrainWreckSettings");
+	}
+	
+	override void HandlerDeattached(Widget w)
+	{
+		GetGame().GetInputManager().ResetContext("TrainWreckSettings");
 	}
 	
 	private SCR_FactionManager GetFactionManager()

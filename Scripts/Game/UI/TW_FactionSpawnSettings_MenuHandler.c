@@ -22,11 +22,14 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 	
 	protected ref SpawnSettingsBase settings = new SpawnSettingsBase();
 	protected ref FactionSpawnSettings factionSpawnSettings;
+	protected SCR_BaseGameMode gameMode;
 	
-	protected SCR_InputButtonComponent saveButton;
+	protected SCR_InputButtonComponent  saveButton;
 	
 	override void HandlerAttached(Widget w)
 	{
+		gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
+		
 		super.HandlerAttached(w);
 		m_Root = w;
 		m_ContentArea = m_Root.FindAnyWidget(s_ContentArea);
@@ -35,34 +38,30 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		Widget save = m_Root.FindAnyWidget(s_SaveButton);
 		if(save)
 		{
-			saveButton = SCR_InputButtonComponent.Cast(save.FindHandler(SCR_InputButtonComponent));
+			saveButton = SCR_InputButtonComponent .Cast(save.FindHandler(SCR_InputButtonComponent ));
 			saveButton.m_OnClicked.Insert(SaveAll);
 		}
 		
 		Widget reset = m_Root.FindAnyWidget(s_ResetButton);
 		if(reset)
 		{
-			SCR_InputButtonComponent resetButton = SCR_InputButtonComponent.Cast(reset.FindHandler(SCR_InputButtonComponent));
+			SCR_InputButtonComponent  resetButton = SCR_InputButtonComponent .Cast(reset.FindHandler(SCR_InputButtonComponent ));
 			resetButton.m_OnClicked.Insert(Reset);
 		}
 	}
 	
-	private void Reset()
+	void Reset()
 	{
-		Print("TrainWreck: Resetting Spawn Settings");
 		settings = SpawnSettingsBase.GetDefault();
-		SpawnSettingsBase.SaveToFile(settings);
-		TW_SpawnManagerBase.GetInstance().LoadSettingsFromFile(settings);
+		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		player.UpdateFactionSpawnSettings(settings);
 		Initialize(settings);
 	}
 	
-	private void SaveAll()
+	void SaveAll()
 	{
-		Print("TrainWreck: Saving Train Wreck Settings");
-		SpawnSettingsBase.SaveToFile(settings);
-		
-		TW_SpawnManagerBase.GetInstance().LoadSettingsFromFile();
-		
+		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
+		player.UpdateFactionSpawnSettings(settings);
 		GetGame().GetWorkspace().RemoveChild(m_Root);
 	}
 	
@@ -101,7 +100,7 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 			Print("TrainWreck: Unable to update faction count... no ref to settings", LogLevel.WARNING);
 			return;
 		}
-		
+			
 		factionSpawnSettings.MaxAmount = (int)value;
 	}
 	
@@ -196,9 +195,4 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		this.settings = settings;
 	}
 	
-	override void HandlerDeattached(Widget w)
-	{
-		if(!GetGame().InPlayMode()) return;
-		SpawnSettingsBase.SaveToFile(TW_SpawnManagerBase.GetInstance().GetSettings());
-	}
 };

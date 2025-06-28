@@ -191,6 +191,9 @@ class TW_SpawnManagerBase
 		else
 			m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
 		
+		
+		SCR_BaseGameMode.TW_SpawnSettings = m_SpawnSettings;
+		
 		if(!m_SpawnSettings)
 		{
 			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
@@ -245,7 +248,12 @@ class TW_SpawnManagerBase
 			FactionSpawnInfo spawnInfo = new FactionSpawnInfo();
 			
 			foreach(PrefabItemChance item : settings.Characters)
+			{
+				if(item.Chance > 0) 
+					PrintFormat("TrainWreck:  CharacterChance(%1): %2 (Chance: %3)", settings.FactionName, item.PrefabName, item.Chance);
+				
 				spawnInfo.AddCharacter(item);
+			}
 			
 			foreach(VehicleItemChance item : settings.Vehicles)
 			{

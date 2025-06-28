@@ -8,6 +8,8 @@ modded class SCR_BaseGameMode
 	protected ref TW_AOIConfig _ussrPlayerSpawnArea;
 	protected ref TW_AOIConfig _fiaPlayerSpawnArea;
 	
+	static ref SpawnSettingsBase TW_SpawnSettings;
+	
 	TW_AOIConfig GetUSPlayerSpawnAreaConfig() 
 	{ 
 		if(!_usPlayerSpawnArea)
@@ -54,6 +56,52 @@ modded class SCR_BaseGameMode
 			InitializeCompositions();
 		
 		return m_USCompositions; 
+	}
+	
+	override void OnPlayerConnected(int playerId)
+	{
+		vanilla.OnPlayerConnected(playerId);
+		
+		if(!Replication.IsServer()) return;
+		
+		PrintFormat("TrainWreck: Player %1 joined. Broadcasting faction spawn settings", playerId);
+		
+		// We will broadcast the faction settings to people upon joining
+		// Afterwards players should receive updates whenever the settings update
+		Rpc(Rpc_Broadcast_FactionSpawnSettings, TW_Util.ToJson(TW_SpawnSettings, true));
+	}
+	
+	void UpdateFactionSpawnSettings(SpawnSettingsBase settings)
+	{
+		if(Replication.IsClient())
+		{
+			Print("TrainWreck: Unable to update faction spawn settings - Invoked from Client");		
+			return;
+		}
+		else
+			Print("TrainWreck: Updating Faction Spawn Settings");
+		
+		if(!SpawnSettingsBase.SaveToFile(settings))
+		{
+			PrintFormat("TrainWreck: UpdateFactionSpawnSettings<SaveToFile> - Failed. %1", TW_Util.ToJson(settings, true));
+			return;
+		}
+		
+		TW_SpawnManagerBase.GetInstance().LoadSettingsFromFile(settings);
+		TW_SpawnSettings = settings;
+		
+		string serialized = TW_Util.ToJson(settings, true);
+		Print("TrainWreck: UpdateFactionSpawnSettings -> Broadcasting Updates");
+		
+		Rpc(Rpc_Broadcast_FactionSpawnSettings, serialized);
+	}
+	
+	[RplRpc(RplChannel.Reliable, RplRcver.Broadcast)]
+	private void Rpc_Broadcast_FactionSpawnSettings(string settings)
+	{
+		PrintFormat("TrainWreck: Broadcast Received");
+		SpawnSettingsBase spawnSettings = SpawnSettingsBase.LoadFromFile(settings);
+		TW_SpawnSettings = spawnSettings;
 	}
 	
 	private void InitializeCompositions()
@@ -130,11 +178,6 @@ modded class SCR_BaseGameMode
 		Print("TrainWreck: Loading Spawn Manager");	
 		m_SpawnManager = new TW_SpawnManagerBase();
 		m_SpawnManager.Init(this);
-		
-		if(!m_USSRCompositions) 
-			InitializeCompositions();
-		
-		GetGame().GetCallqueue().CallLater(Test, 1000 * 5, false);
 	}
 	
 	private void OnInvalidPlacement(TW_CompositionPlacementResult result)
@@ -172,10 +215,12 @@ modded class SCR_BaseGameMode
 		PrintFormat("TrainWreck-SpawnSystem: callback - Failed to spawn AOI: '%1'", SCR_Enum.GetEnumName(TW_AOIFailedReason, reason), LogLevel.ERROR);
 	}
 	
-	private ref array<ref TW_AreaOfInterestHandler> _handlers = {};
+	//private ref array<ref TW_AreaOfInterestHandler> _handlers = {};
 	private void Test()
 	{
-		if(!TW_SpawnManagerBase.GetInstance().GetSettings().CompositionSettings.ShouldSpawnComposition)
+		
+		return;
+		/*if(!TW_SpawnManagerBase.GetInstance().GetSettings().CompositionSettings.ShouldSpawnComposition)
 			return;
 		
 		ref TW_CompositionSettings settings = TW_SpawnManagerBase.GetInstance().GetSettings().CompositionSettings;
@@ -212,6 +257,6 @@ modded class SCR_BaseGameMode
 				PrintFormat("TrainWreck: Successfully spawned something");			
 			
 			_handlers.Insert(aoiHandler);			
-		}
+		}*/
 	}
 }

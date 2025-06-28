@@ -415,9 +415,17 @@ class SpawnSettingsBase
 		return settings;
 	}
 	
-	static SpawnSettingsBase LoadFromFile()
+	static SpawnSettingsBase LoadFromFile(string json=string.Empty)
 	{
-		SCR_JsonLoadContext loadContext = TW_Util.LoadJsonFile(FILENAME, true);
+		SCR_JsonLoadContext loadContext;
+		
+		if(json != string.Empty)
+		{
+			loadContext = new SCR_JsonLoadContext();
+			loadContext.ImportFromString(json);
+		}
+		else 
+			loadContext = TW_Util.LoadJsonFile(FILENAME, true);
 		
 		if(!loadContext)
 		{
