@@ -12,6 +12,7 @@ class TW_Settings_Menu: MenuBase
 		handler = TW_FactionSpawnSettings_MenuHandler.Cast(widget.FindHandler(TW_FactionSpawnSettings_MenuHandler));
 		widget.SetName("TrainWreckSettings");
 		
+		handler.m_OnSaved.Insert(Close);
 		
 		rootWidget.AddChild(widget);
 		
@@ -35,6 +36,7 @@ class TW_Settings_Menu: MenuBase
 	{
 		if(!handler) return;
 		
+		handler.m_OnSaved.Remove(Close);
 		RemoveListeners();
 	}
 	
@@ -44,8 +46,10 @@ class TW_Settings_Menu: MenuBase
 		
 		if(!manager) return;
 		
-		manager.AddActionListener("MenuBack", EActionTrigger.DOWN, SaveAll);
-		manager.AddActionListener("DialogConfirm", EActionTrigger.DOWN, Reset);
+		manager.AddActionListener("MenuBack", EActionTrigger.DOWN, handler.SaveAll);
+		manager.AddActionListener("DialogConfirm", EActionTrigger.DOWN, handler.Reset);
+		manager.AddActionListener("MenuTabLeft", EActionTrigger.DOWN, handler.NavigateLeft);
+		manager.AddActionListener("MenuTabRight", EActionTrigger.DOWN, handler.NavigateRight);
 	}
 	
 	private void RemoveListeners()
@@ -53,18 +57,9 @@ class TW_Settings_Menu: MenuBase
 		InputManager manager = GetGame().GetInputManager();
 		if(!manager) return;
 		
-		manager.RemoveActionListener("MenuBack", EActionTrigger.DOWN, SaveAll);
-		manager.RemoveActionListener("DialogConfirm", EActionTrigger.DOWN, Reset);
-	}
-	
-	private void SaveAll()
-	{
-		handler.SaveAll();
-		Close();
-	}
-	
-	private void Reset()
-	{
-		handler.Reset();
+		manager.RemoveActionListener("MenuBack", EActionTrigger.DOWN, handler.SaveAll);
+		manager.RemoveActionListener("DialogConfirm", EActionTrigger.DOWN, handler.Reset);
+		manager.AddActionListener("MenuTabLeft", EActionTrigger.DOWN, handler.NavigateLeft);
+		manager.AddActionListener("MenuTabRight", EActionTrigger.DOWN, handler.NavigateRight);
 	}
 };

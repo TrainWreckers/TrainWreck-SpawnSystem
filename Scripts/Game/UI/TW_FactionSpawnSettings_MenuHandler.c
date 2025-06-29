@@ -26,6 +26,8 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 	
 	protected SCR_InputButtonComponent  saveButton;
 	
+	ref ScriptInvoker m_OnSaved = new ScriptInvoker(); 
+	
 	override void HandlerAttached(Widget w)
 	{
 		gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
@@ -50,6 +52,24 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		}
 	}
 	
+	void NavigateLeft()
+	{
+		Widget child = m_ContentArea.GetChildren();
+		if(!child) return;
+		
+		Widget sub = child.GetChildren();
+		
+		GetGame().GetWorkspace().SetFocusedWidget(sub);
+	}
+	
+	void NavigateRight()
+	{
+		Widget child = m_SettingsArea.GetChildren();
+		
+		if(!child) return;
+		GetGame().GetWorkspace().SetFocusedWidget(child);
+	}
+	
 	void Reset()
 	{
 		settings = SpawnSettingsBase.GetDefault();
@@ -63,6 +83,9 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		player.UpdateFactionSpawnSettings(settings);
 		GetGame().GetWorkspace().RemoveChild(m_Root);
+		
+		if(m_OnSaved)
+			m_OnSaved.Invoke();
 	}
 	
 	private void SetupFactionEnabled()
