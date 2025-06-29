@@ -1,26 +1,25 @@
-class TW_Layout_SpawnSettings : MenuBase
+class TW_Layout_SpawnSettingsUI : ChimeraMenuBase
 {
-	protected static const string CONTENT_AREA = "ContentArea";
-	
-	protected static const string WIDGET_STRING_PREFAB = "";
-	protected static const string WIDGET_INTEGER_PREFAB = "";
-	protected static const string WIDGET_FLOAT_PREFAB = "";
-	protected static const string WIDGET_ENUM_PREFAB = "";
-	protected static const string WIDGET_BOOL_PREFAB = "";
-	protected static const string WIDGET_FLAGS_PREFAB = "";
-	
-	private Widget _contentAreaWidget;
-	private Widget _rootWidget;
-	
-	private ref map<string, SCR_ChangeableComponentBase> _fieldMap = new map<string, SCR_ChangeableComponentBase>();
+	private ref SpawnSettingsBase settings = new SpawnSettingsBase();
+	private TW_SpawnSettingsMenu_Handler _handler;
 	
 	protected override void OnMenuOpen()
 	{
-		_rootWidget = GetRootWidget();
+		super.OnMenuOpen();
+		_handler = TW_SpawnSettingsMenu_Handler.Cast(GetRootWidget().FindHandler(TW_SpawnSettingsMenu_Handler));
 		
-		// Get content area
-		_contentAreaWidget = _rootWidget.FindWidget(CONTENT_AREA);
+		SpawnSettingsBase settings;
+		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
 		
+		if(TW_Global.IsServer(gameMode))
+		{
+			settings = TW_SpawnManagerBase.GetInstance().GetSettings();
+		}
+		else
+		{
+			settings = SCR_BaseGameMode.TW_SpawnSettings;
+		}
 		
-	}
+		_handler.AttachToSpawnSettings(settings);		
+	}	
 };

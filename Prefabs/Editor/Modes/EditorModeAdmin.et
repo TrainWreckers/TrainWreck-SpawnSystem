@@ -1,0 +1,21 @@
+SCR_EditorModeEntity : "{E56F54E533ACE527}Prefabs/Editor/Modes/EditorModeBase.et" {
+ ID "54F0F1E1D7628D32"
+ components {
+  SCR_ToolbarActionsEditorComponent "{548A6368BC327BA1}" {
+   m_ActionsLists {
+    SCR_EditorActionList "{54B2AA70C4306238}" {
+     m_Actions {
+      TW_Settings_ToolbarAction "{65435DD68CF6820E}" {
+       m_Info SCR_UIInfo "{65435DD6F0230914}" {
+        Name "Spawn Settings"
+        Description "TrainWreck Spawn Settings"
+        Icon "{8083D425A749EE46}UI/Textures/Editor/Toolbar/Commanding/Toolbar_Commanding_Objective_Custom.edds"
+       }
+       m_ActionGroup TOOLS
+      }
+     }
+    }
+   }
+  }
+ }
+}

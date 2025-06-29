@@ -1,0 +1,69 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ components {
+  TW_FactionSettings_MenuHandler "{65ACC2FCC0C1CC7B}" {
+  }
+ }
+ {
+  ButtonWidgetClass "{65ACC2FD8631D165}" : "{4A119D28E23A3999}UI/layouts/WidgetLibrary/Buttons/WLib_ButtonImage.layout" {
+   Name "Button"
+   Slot FrameWidgetSlot "{65ACC2FD8631D16E}" {
+    PositionX 0
+    OffsetLeft 0
+    PositionY 0
+    OffsetTop 0
+    SizeX 382
+    OffsetRight -382
+    SizeY 254
+    OffsetBottom -254
+   }
+   components {
+    SCR_ButtonImageComponent "{55589476821916D2}" {
+     m_sTexture ""
+    }
+   }
+   {
+    SizeLayoutWidgetClass "{5548E6E7E6AEDDA7}" {
+     Prefab "{5548E6E7E6AEDDA7}"
+     {
+      OverlayWidgetClass "{5548E6E7F213FBF1}" {
+       Prefab "{5548E6E7F213FBF1}"
+       {
+        ImageWidgetClass "{5548E6E7DF4EE3F2}" {
+         Prefab "{5548E6E7DF4EE3F2}"
+         Size 800 400
+        }
+        ScaleWidgetClass "{55589476C896A09B}" {
+         Prefab "{55589476C896A09B}"
+         {
+          ImageWidgetClass "{55589476CBD910D4}" {
+           Prefab "{55589476CBD910D4}"
+           Size 800 400
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+  TextWidgetClass "{65652BDD68B00A31}" {
+   Name "FactionName"
+   Slot FrameWidgetSlot "{65652BDD20819468}" {
+    PositionX 58.833
+    OffsetLeft 58.833
+    PositionY 251.611
+    OffsetTop 251.611
+    SizeX 100
+    OffsetRight -158.833
+    SizeY 30
+    OffsetBottom -281.611
+    SizeToContent 1
+   }
+   Text "Faction not loaded"
+   "Font Size" 36
+   "Horizontal Alignment" Center
+  }
+ }
+}
