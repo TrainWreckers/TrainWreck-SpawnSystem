@@ -1,0 +1,31 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ components {
+  TW_FactionVehiclesMenuHandler "{65CCA1F38EFEE672}" {
+  }
+ }
+ {
+  VerticalLayoutWidgetClass "{65CCA1F0948DB470}" {
+   Name "VerticalLayout0"
+   Slot FrameWidgetSlot "{65CCA1F0948DB48F}" {
+    SizeToContent 1
+   }
+   {
+    ScrollLayoutWidgetClass "{65CCA1F5AAC81B13}" {
+     Name "ScrollLayout0"
+     Slot LayoutSlot {
+      SizeMode Fill
+      FillWeight 0.5
+     }
+     {
+      VerticalLayoutWidgetClass "{65CCA1F5AF764BCC}" {
+       Name "ContentArea"
+       Slot AlignableSlot "{65CCA1F5AF764BE5}" {
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,42 @@
+FrameWidgetClass {
+ Name "rootFrame"
+ components {
+  TW_FactionUnitsMenuHandler "{65CCA1CFACA98BA0}" {
+  }
+ }
+ {
+  SizeLayoutWidgetClass "{65CCA1CDB838EBE5}" {
+   Name "SizeLayout0"
+   Slot FrameWidgetSlot "{65CCA1CD8A592352}" {
+    OffsetLeft 0
+    OffsetTop 0
+    SizeX 500
+    OffsetRight -500
+    SizeY 500
+    OffsetBottom -500
+   }
+   {
+    VerticalLayoutWidgetClass "{65CCA1CDE73B98C3}" {
+     Name "VerticalLayout0"
+     Slot AlignableSlot "{65CCA1CDEA7F03B5}" {
+     }
+     {
+      ScrollLayoutWidgetClass "{65CCA1CDB838EBE4}" {
+       Name "ScrollLayout0"
+       Slot LayoutSlot {
+        SizeMode Fill
+       }
+       {
+        VerticalLayoutWidgetClass "{65CCA1CDB838EBE7}" {
+         Name "ContentArea"
+         Slot AlignableSlot "{65CCA1CD3AC05F0C}" {
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

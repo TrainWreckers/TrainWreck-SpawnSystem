@@ -20,6 +20,6 @@ class TW_Layout_SpawnSettingsUI : ChimeraMenuBase
 			settings = SCR_BaseGameMode.TW_SpawnSettings;
 		}
 		
-		_handler.AttachToSpawnSettings(settings);		
+		_handler.AttachToSpawnSettings(settings);	
 	}	
 };

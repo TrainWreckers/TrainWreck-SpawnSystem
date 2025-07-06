@@ -1,34 +1,79 @@
 class TW_Settings_Menu: MenuBase
 {
-	private TW_FactionSpawnSettings_MenuHandler handler;
+	const string s_FactionSettingsLayout = "{C9D1F6372109FC77}UI/FactionSettings.Layout.layout";
 	
+	private TW_FactionSpawnSettings_MenuHandler handler;
+	private ref SpawnSettingsBase _settings;
+	private Widget _contentArea;
+	protected UniformGridLayoutWidget grid;
 	protected override void OnMenuOpen()
 	{
 		Widget rootWidget = GetRootWidget();
 		
 		if(!rootWidget) return;
+		_contentArea = rootWidget.FindAnyWidget("ContentArea");
+		_settings = TW_FactionOverviewSystem.GetSpawnSettings();
+		grid = UniformGridLayoutWidget.Cast(_contentArea);
 		
-		Widget widget = GetGame().GetWorkspace().CreateWidgets("{11DFF8493E5F6F83}UI/SpawnSettingsLayout.layout"); //.OpenMenu(ChimeraMenuPreset.TW_SpawnSettings);
-		handler = TW_FactionSpawnSettings_MenuHandler.Cast(widget.FindHandler(TW_FactionSpawnSettings_MenuHandler));
-		widget.SetName("TrainWreckSettings");
-		
-		handler.m_OnSaved.Insert(Close);
-		
-		rootWidget.AddChild(widget);
-		
-		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
-		
-		SpawnSettingsBase settings;
-		
-		if(Replication.IsServer())
+		Initialize();
+	}
+	
+	protected void Initialize()
+	{
+		if(!_settings)
 		{
-			settings = TW_SpawnManagerBase.GetInstance().GetSettings();
+			Print("TrainWreck: Unable to initalize spawn settings menu -> Null reference to spawn settings", LogLevel.WARNING);
+			return;
 		}
-		else 
-			settings = SCR_BaseGameMode.TW_SpawnSettings;
 		
-		handler.Initialize(settings);
-		AddListeners();
+		if(!_settings.FactionSettings || _settings.FactionSettings.IsEmpty())
+		{
+			Print("TrainWreck: Unable to initialize spawn settings menu -> No factions detected", LogLevel.WARNING);
+			return;
+		}
+		
+		int currentRow = 0;
+		int currentCol = 0;
+		int maxCols = 2;
+		
+		foreach(FactionSpawnSettings factionSettings : _settings.FactionSettings)
+		{
+			Widget factionWidget = GetGame().GetWorkspace().CreateWidgets(s_FactionSettingsLayout, _contentArea);
+			TW_FactionSettings_MenuHandler handler = TW_FactionSettings_MenuHandler.Cast(factionWidget.FindHandler(TW_FactionSettings_MenuHandler));
+			handler.Initialize(_settings, factionSettings);
+			handler.GetFactionButtonWidget().m_OnClicked.Insert(OnFactionButtonClicked);
+			
+			UniformGridSlot.SetRow(factionWidget, currentRow);
+			UniformGridSlot.SetColumn(factionWidget, currentCol);
+			
+			currentCol++;
+			
+			if(currentCol >= maxCols)
+			{
+				currentCol = 0;
+				currentRow++;
+			}
+		}
+	}
+	
+	protected void OnFactionButtonClicked(SCR_ButtonImageComponent comp)
+	{
+		string id = comp.GetId();
+		
+		ref FactionSpawnSettings selectedSettings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
+		if(!selectedSettings || selectedSettings.FactionName != id)
+		{
+			PrintFormat("TrainWreck: ID selected: %1", id);
+			TW_FactionOverviewSystem.SelectFaction(id);
+		}
+		
+		if(!TW_FactionOverviewSystem.GetFactionSpawnSettings())
+		{
+			Print("TrainWreck: Faction was not selected", LogLevel.ERROR);
+			return;
+		}
+		
+		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.TW_FactionOverviewMenuUI);
 	}
 	
 	
@@ -43,23 +88,14 @@ class TW_Settings_Menu: MenuBase
 	private void AddListeners()
 	{
 		InputManager manager = GetGame().GetInputManager();
-		
 		if(!manager) return;
-		
-		manager.AddActionListener("MenuBack", EActionTrigger.DOWN, handler.SaveAll);
-		manager.AddActionListener("DialogConfirm", EActionTrigger.DOWN, handler.Reset);
-		manager.AddActionListener("MenuTabLeft", EActionTrigger.DOWN, handler.NavigateLeft);
-		manager.AddActionListener("MenuTabRight", EActionTrigger.DOWN, handler.NavigateRight);
+		manager.ActivateContext("TrainWreckSettings");
 	}
 	
 	private void RemoveListeners()
 	{
 		InputManager manager = GetGame().GetInputManager();
 		if(!manager) return;
-		
-		manager.RemoveActionListener("MenuBack", EActionTrigger.DOWN, handler.SaveAll);
-		manager.RemoveActionListener("DialogConfirm", EActionTrigger.DOWN, handler.Reset);
-		manager.AddActionListener("MenuTabLeft", EActionTrigger.DOWN, handler.NavigateLeft);
-		manager.AddActionListener("MenuTabRight", EActionTrigger.DOWN, handler.NavigateRight);
+		manager.ResetContext("TrainWreckSettings");
 	}
 };
