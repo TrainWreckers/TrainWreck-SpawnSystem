@@ -89,6 +89,7 @@ modded class SCR_BaseGameMode
 		
 		TW_SpawnManagerBase.GetInstance().LoadSettingsFromFile(settings);
 		TW_SpawnSettings = settings;
+		TW_FactionOverviewSystem.SetSpawnSettings(settings);
 		
 		string serialized = TW_Util.ToJson(settings, true);
 		Print("TrainWreck: UpdateFactionSpawnSettings -> Broadcasting Updates");
@@ -102,6 +103,7 @@ modded class SCR_BaseGameMode
 		PrintFormat("TrainWreck: Broadcast Received");
 		SpawnSettingsBase spawnSettings = SpawnSettingsBase.LoadFromFile(settings);
 		TW_SpawnSettings = spawnSettings;
+		TW_FactionOverviewSystem.SetSpawnSettings(spawnSettings);
 	}
 	
 	private void InitializeCompositions()

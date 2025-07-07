@@ -113,6 +113,34 @@ class SpawnSettingsBase
 		SetDirty();
 	}
 	
+	void SetVehicleSpawn(bool value)
+	{
+		VehicleSpawnSettings.ShouldSpawnVehicles = value;
+		m_OnChanged.Invoke("ShouldSpawnVehicles");
+		SetDirty();
+	}
+	
+	void SetVehicleMax(int max)
+	{
+		VehicleSpawnSettings.MaxVehicles = max;
+		m_OnChanged.Invoke("MaxVehicles");
+		SetDirty();
+	}
+	
+	void SetVehicleSpawnChance(float chance)
+	{
+		VehicleSpawnSettings.VehicleChanceToSpawn = chance;
+		m_OnChanged.Invoke("VehicleChanceToSpawn");
+		SetDirty();
+	}
+	
+	void SetVehicleTypeChance(string type, float chance)
+	{
+		VehicleSpawnSettings.VehicleTypeChances.Set(type, chance);
+		m_OnChanged.Invoke("VehicleSpawnChance");
+		SetDirty();
+	}
+	
 	void SetWanderIntervalInSeconds(int value)
 	{
 		WanderIntervalInSeconds = value;

@@ -5,20 +5,17 @@ FrameWidgetClass {
   }
  }
  {
-  SizeLayoutWidgetClass "{65CCA1CDB838EBE5}" {
+  SizeLayoutWidgetClass "{65CCA1C83DB39AB2}" {
    Name "SizeLayout0"
-   Slot FrameWidgetSlot "{65CCA1CD8A592352}" {
-    OffsetLeft 0
-    OffsetTop 0
-    SizeX 500
-    OffsetRight -500
-    SizeY 500
-    OffsetBottom -500
+   Slot FrameWidgetSlot "{65CCA1C83DB39ADF}" {
+    SizeToContent 1
    }
+   AllowHeightOverride 1
+   HeightOverride 780
    {
-    VerticalLayoutWidgetClass "{65CCA1CDE73B98C3}" {
-     Name "VerticalLayout0"
-     Slot AlignableSlot "{65CCA1CDEA7F03B5}" {
+    HorizontalLayoutWidgetClass "{65CCA1CBA4AB7FB8}" {
+     Name "HorizontalLayout0"
+     Slot AlignableSlot "{65CCA1C83EF4C6BA}" {
      }
      {
       ScrollLayoutWidgetClass "{65CCA1CDB838EBE4}" {

@@ -1,9 +1,5 @@
 FrameWidgetClass {
  Name "rootFrame"
- components {
-  TW_FactionSpawnSettings_MenuHandler "{65ACC2EE26150E44}" {
-  }
- }
  {
   HorizontalLayoutWidgetClass "{64CE308603DFF692}" {
    Name "Window"

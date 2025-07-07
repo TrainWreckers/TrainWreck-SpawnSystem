@@ -29,6 +29,13 @@ class TW_ItemChance_MenuHandler : SCR_ScriptedWidgetComponent
 		m_Root = w;
 	}
 	
+	override void HandlerDeattached(Widget w)
+	{
+		if(!GetSlider()) return;
+		
+		GetSlider().m_OnChanged.Clear();
+	}
+	
 	private ref TW_ItemChanceInfo GetInfo()
 	{
 		ref SCR_EditableEntityUIInfo info = TW_Util.GetCharacterUIInfo(_item.PrefabName);

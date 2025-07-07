@@ -2,10 +2,13 @@ class TW_Settings_Menu: MenuBase
 {
 	const string s_FactionSettingsLayout = "{C9D1F6372109FC77}UI/FactionSettings.Layout.layout";
 	
-	private TW_FactionSpawnSettings_MenuHandler handler;
 	private ref SpawnSettingsBase _settings;
 	private Widget _contentArea;
 	protected UniformGridLayoutWidget grid;
+	
+	private SCR_InputButtonComponent saveButton;
+	private SCR_InputButtonComponent resetButton;
+	
 	protected override void OnMenuOpen()
 	{
 		Widget rootWidget = GetRootWidget();
@@ -15,6 +18,10 @@ class TW_Settings_Menu: MenuBase
 		_settings = TW_FactionOverviewSystem.GetSpawnSettings();
 		grid = UniformGridLayoutWidget.Cast(_contentArea);
 		
+		saveButton = SCR_InputButtonComponent.Cast(rootWidget.FindAnyWidget("SaveButton").FindHandler(SCR_InputButtonComponent));
+		resetButton = SCR_InputButtonComponent.Cast(rootWidget.FindAnyWidget("ResetButton").FindHandler(SCR_InputButtonComponent));
+		
+		AddListeners();
 		Initialize();
 	}
 	
@@ -76,17 +83,27 @@ class TW_Settings_Menu: MenuBase
 		GetGame().GetMenuManager().OpenMenu(ChimeraMenuPreset.TW_FactionOverviewMenuUI);
 	}
 	
+	private void Save()
+	{
+		Close();
+	}
+	
+	private void Reset()
+	{
+		TW_FactionOverviewSystem.ResetToDefault();
+		Close();
+	}
 	
 	protected override void OnMenuClose()
-	{
-		if(!handler) return;
-		
-		handler.m_OnSaved.Remove(Close);
+	{		
 		RemoveListeners();
 	}
 	
 	private void AddListeners()
 	{
+		saveButton.m_OnClicked.Insert(Save);
+		resetButton.m_OnClicked.Insert(Reset);
+		
 		InputManager manager = GetGame().GetInputManager();
 		if(!manager) return;
 		manager.ActivateContext("TrainWreckSettings");
@@ -94,6 +111,8 @@ class TW_Settings_Menu: MenuBase
 	
 	private void RemoveListeners()
 	{
+		saveButton.m_OnClicked.Remove(Save);
+		resetButton.m_OnClicked.Remove(Reset);
 		InputManager manager = GetGame().GetInputManager();
 		if(!manager) return;
 		manager.ResetContext("TrainWreckSettings");

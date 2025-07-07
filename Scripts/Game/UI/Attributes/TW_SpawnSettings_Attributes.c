@@ -212,3 +212,174 @@ class TW_SpawnSettings_WanderIntervalInSecondsAttribute : SCR_BaseValueListEdito
 		settings.SetWanderIntervalInSeconds(var.GetInt());
 	}
 }
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_Shouldspawn : SCR_BaseEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{		
+		ref SpawnSettingsBase spawnSettings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!spawnSettings || ! spawnSettings.VehicleSpawnSettings)
+			return SCR_BaseEditorAttributeVar.CreateBool(false);
+		
+		return SCR_BaseEditorAttributeVar.CreateBool(spawnSettings.VehicleSpawnSettings.ShouldSpawnVehicles);
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		bool value = var.GetBool();
+		
+		ref SpawnSettingsBase spawnSettings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!spawnSettings || !spawnSettings.VehicleSpawnSettings)
+			return;
+		
+		spawnSettings.SetVehicleSpawn(value);
+	}
+}
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_Max : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateInt(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateInt(settings.VehicleSpawnSettings.MaxVehicles);
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		int value = var.GetInt();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleMax(value);
+	}
+}
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_SpawnChance : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateFloat(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateFloat(settings.VehicleSpawnSettings.VehicleChanceToSpawn);
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		float value = var.GetFloat();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleSpawnChance(value);
+	}
+}
+
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_TypeSmallChance : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateFloat(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateFloat(settings.VehicleSpawnSettings.VehicleTypeChances.Get("Small"));
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		float value = var.GetFloat();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleTypeChance("Small", value);
+	}
+}
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_TypeMediumChance : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateFloat(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateFloat(settings.VehicleSpawnSettings.VehicleTypeChances.Get("Medium"));
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		float value = var.GetFloat();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleTypeChance("Medium", value);
+	}
+}
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_TypeLargeChance : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateFloat(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateFloat(settings.VehicleSpawnSettings.VehicleTypeChances.Get("Large"));
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		float value = var.GetFloat();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleTypeChance("Large", value);
+	}
+}
+
+[BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
+class TW_SpawnSettings_Vehicle_TypeAirChance : SCR_BaseValueListEditorAttribute
+{
+	override SCR_BaseEditorAttributeVar ReadVariable(Managed item, SCR_AttributesManagerEditorComponent manager)
+	{
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return SCR_BaseEditorAttributeVar.CreateFloat(0);
+		
+		return SCR_BaseEditorAttributeVar.CreateFloat(settings.VehicleSpawnSettings.VehicleTypeChances.Get("Air"));
+	}
+	
+	override void WriteVariable(Managed item, SCR_BaseEditorAttributeVar var, SCR_AttributesManagerEditorComponent manager, int playerID)
+	{
+		float value = var.GetFloat();
+		
+		ref SpawnSettingsBase settings = TW_SpawnSettings_BaseAttribute.GetSettings();
+		
+		if(!settings || !settings.VehicleSpawnSettings) return;
+		
+		settings.SetVehicleTypeChance("Air", value);
+	}
+}

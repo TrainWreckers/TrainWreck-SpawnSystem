@@ -10,22 +10,38 @@ class TW_FactionOverviewSystem : GameSystem
 		Print("TrainWreck: Initialized Faction Overview System");
 		#ifdef WORKBENCH 
 		activeSpawnSettings = SpawnSettingsBase.LoadFromFile();
+		#else
+		if(Replication.IsServer())
+			activeSpawnSettings = TW_SpawnManagerBase.GetInstance().GetSettings();
+		else 
+			activeSpawnSettings = SCR_BaseGameMode.TW_SpawnSettings;
+		#endif
 		
-		if(activeSpawnSettings.FactionSettings.Count() > 0)
+		if(activeSpawnSettings && activeSpawnSettings.FactionSettings.Count() > 0)
 		{
 			activeFactionSpawnSettings = activeSpawnSettings.FactionSettings.Get(0);
 		}
-		#else
-		if(Replication.IsServer())
-			settings = TW_SpawnManagerBase.GetInstance().GetSettings();
-		else 
-			settings = SCR_BaseGameMode.TW_SpawnSettings;
-		#endif
 		
 		isInitialized = true;
 	}
 	
-	static void SetSpawnSettings(SpawnSettingsBase settings) { activeSpawnSettings = settings; }
+	static void SetSpawnSettings(SpawnSettingsBase settings) 
+	{
+		string factionName = string.Empty; 
+		
+		if(GetFactionSpawnSettings() != null)
+		{
+			factionName = GetFactionSpawnSettings().FactionName;
+		}
+		
+		activeSpawnSettings = settings; 
+		
+		if(factionName != string.Empty)
+		{
+			SelectFaction(factionName);
+		}
+	}
+	
 	static void SetFactionspawnSettings(FactionSpawnSettings settings) { activeFactionSpawnSettings = settings; }
 	
 	static void SelectFaction(string factionKey)
@@ -58,6 +74,13 @@ class TW_FactionOverviewSystem : GameSystem
 	{
 		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		player.UpdateFactionSpawnSettings(activeSpawnSettings);
+	}
+	
+	static void ResetToDefault()
+	{
+		ref SpawnSettingsBase settings = SpawnSettingsBase.GetDefault();
+		SetSpawnSettings(settings);
+		SaveSettings();
 	}
 	
 	static void InitSystem()

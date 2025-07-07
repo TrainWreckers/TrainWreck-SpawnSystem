@@ -9,6 +9,8 @@ class TW_FactionUnitsMenuHandler : SCR_ScriptedWidgetComponent
 	protected ref FactionSpawnSettings _factionSpawnSettings;
 	protected Widget _contentArea;
 	
+	private ref array<SCR_ChangeableComponentBase> components = {};
+	
 	override void HandlerAttached(Widget w)
 	{
 		m_Root = w;
@@ -17,12 +19,23 @@ class TW_FactionUnitsMenuHandler : SCR_ScriptedWidgetComponent
 		_factionSpawnSettings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
 		SetupFactionEnabled();
 		SetupFactionCount();
+		SetupWanderChance();
 		
 		foreach(PrefabItemChance prefab : _factionSpawnSettings.Characters)
 		{
 			Widget chanceWidget = GetGame().GetWorkspace().CreateWidgets(s_ItemChanceLayout, _contentArea);
 			TW_ItemChance_MenuHandler handler = TW_ItemChance_MenuHandler.Cast(chanceWidget.FindHandler(TW_ItemChance_MenuHandler));
 			handler.LinkTo(prefab);
+		}
+	}
+	
+	override void HandlerDeattached(Widget w)
+	{
+		if(components && !components.IsEmpty())
+		{
+			foreach(SCR_ChangeableComponentBase comp : components)
+				if(comp)
+					comp.m_OnChanged.Clear();
 		}
 	}
 	
@@ -42,6 +55,23 @@ class TW_FactionUnitsMenuHandler : SCR_ScriptedWidgetComponent
 		checkbox.SetLabel("Enabled");
 		checkbox.m_OnChanged.Insert(OnFactionEnabledChanged);
 		checkbox.SetChecked(_factionSpawnSettings.IsEnabled);
+		components.Insert(checkbox);
+	}
+	
+	private void SetupWanderChance()
+	{
+		Widget layout = GetGame().GetWorkspace().CreateWidgets(s_SliderLayout, _contentArea);
+		
+		SCR_SliderComponent slider = SCR_SliderComponent.Cast(layout.FindHandler(SCR_SliderComponent));
+		
+		slider.SetLabel("AI Wander Chance");
+		slider.SetMax(1);
+		slider.SetStep(0.05);
+		slider.SetMin(0);
+		slider.SetValue(_factionSpawnSettings.AIWanderChance);
+		slider.m_OnChanged.Insert(OnFactionWandererChanged);
+		
+		components.Insert(slider);
 	}
 	
 	private void SetupFactionCount()
@@ -57,6 +87,19 @@ class TW_FactionUnitsMenuHandler : SCR_ScriptedWidgetComponent
 		slider.SetMin(0);
 		slider.SetValue(_factionSpawnSettings.MaxAmount);
 		slider.m_OnChanged.Insert(OnFactionCountChanged);
+		
+		components.Insert(slider);
+	}
+	
+	private void OnFactionWandererChanged(SCR_SliderComponent comp, float value)
+	{
+		if(!_factionSpawnSettings)
+		{
+			Print("TrainWreck: Unable to update faction wanderer changes... no ref to settings", LogLevel.WARNING);
+			return;
+		}
+		
+		_factionSpawnSettings.AIWanderChance = value;
 	}
 	
 	private void OnFactionEnabledChanged(SCR_CheckboxComponent comp, bool value)
