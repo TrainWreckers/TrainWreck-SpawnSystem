@@ -11,7 +11,10 @@ class TW_FactionBehaviorsMenuHandler : SCR_ScriptedWidgetComponent
 	{
 		m_Root = w;
 		m_Content = w.FindAnyWidget("ContentArea");
-		_factionSpawnSettings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
+		
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		_factionSpawnSettings = interface.GetFactionSpawnSettings();
+		
 		Initialize();
 	}
 	

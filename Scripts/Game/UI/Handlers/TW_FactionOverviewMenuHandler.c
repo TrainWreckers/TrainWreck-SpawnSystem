@@ -8,12 +8,13 @@ class TW_FactionOverviewMenuHandler : SCR_ScriptedWidgetComponent
 		super.HandlerAttached(w);
 		m_Root = w;
 		
-		TW_FactionOverviewSystem.InitSystem();
+		SpawnSettingsManager.GetInstance();
 		
 		tabs = SCR_TabViewComponent.Cast(m_Root.FindAnyWidget("Tabs").FindHandler(SCR_TabViewComponent));
 		TextWidget text = TextWidget.Cast(m_Root.FindAnyWidget("FactionTitle"));
 		
-		ref FactionSpawnSettings settings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		ref FactionSpawnSettings settings = interface.GetFactionSpawnSettings();
 		
 		if(settings)
 		{

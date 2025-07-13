@@ -32,7 +32,8 @@ class TW_FactionOverview_Menu: MenuBase
 	
 	protected override void OnMenuClose()
 	{
-		TW_FactionOverviewSystem.SaveSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		interface.SaveSettings();
 		Close();
 	}
 };

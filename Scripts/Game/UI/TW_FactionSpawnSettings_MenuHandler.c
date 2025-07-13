@@ -51,7 +51,8 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 			resetButton.m_OnClicked.Insert(Reset);
 		}
 		
-		settings = TW_FactionOverviewSystem.GetSpawnSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		settings = interface.GetSpawnSettings();
 	}
 	
 	void Reset()

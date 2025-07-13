@@ -2,11 +2,7 @@ class TW_SpawnSettings_BaseAttribute : SCR_BaseValueListEditorAttribute
 {
 	static SpawnSettingsBase GetSettings()
 	{
-		TW_SpawnManagerBase manager = TW_SpawnManagerBase.GetInstance();
-		
-		if(!manager) return null;
-		
-		return manager.GetSettings();
+		return TW_SpawnManagerBase.GetSpawnSettings();
 	}
 }
 
@@ -133,6 +129,7 @@ class TW_SpawnSettings_SetAntiSpawnDistanceInChunksAttribute : SCR_BaseValueList
 	}
 }
 
+/*
 [BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
 class TW_SpawnSettings_SetAntiSpawnGridSizeAttribute : SCR_BaseValueListEditorAttribute
 {
@@ -151,7 +148,7 @@ class TW_SpawnSettings_SetAntiSpawnGridSizeAttribute : SCR_BaseValueListEditorAt
 		if(!settings) return;
 		settings.SetAntiSpawnGridSize(var.GetInt());
 	}
-}
+}*/
 
 [BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
 class TW_SpawnSettings_SetGarbageCollectionTimerAttribute : SCR_BaseValueListEditorAttribute

@@ -51,11 +51,13 @@ class TW_SpawnSettingsMenu_Handler : SCR_ScriptedWidgetComponent
 				break;
 			}
 			
+			/*
 			case s_AntiSpawnGridSizeInMetersSlider:
 			{
 				settings.SetAntiSpawnGridSize(value);
 				break;
 			}
+			*/
 			
 			case s_AntiSpawnDistanceInChunksSlider:
 			{
@@ -140,7 +142,7 @@ class TW_SpawnSettingsMenu_Handler : SCR_ScriptedWidgetComponent
 		GetSlider_SpawnDistanceInChunks().SetValue(settings.SpawnDistanceInChunks);
 		GetSlider_SpawnIntervalInSeconds().SetValue(settings.SpawnTimerInSeconds);
 		GetSlider_WanderIntervalInSeconds().SetValue(settings.WanderIntervalInSeconds);
-		GetSlider_AntiSpawnGridSizeInMeters().SetValue(settings.AntiSpawnGridSize);
+		//GetSlider_AntiSpawnGridSizeInMeters().SetValue(settings.AntiSpawnGridSize);
 		GetSlider_AntiSpawnDistanceInChunks().SetValue(settings.AntiSpawnDistanceInChunks);
 		GetSlider_GarbageCollectionTimerInSeconds().SetValue(settings.GarbageCollectionTimerInSeconds);
 	}
@@ -148,7 +150,7 @@ class TW_SpawnSettingsMenu_Handler : SCR_ScriptedWidgetComponent
 	override void HandlerDeattached(Widget w)
 	{
 		if(!GetGame().InPlayMode()) return;
-		SpawnSettingsBase.SaveToFile(TW_SpawnManagerBase.GetInstance().GetSettings());
+		SpawnSettingsBase.SaveToFile(TW_SpawnManagerBase.GetSpawnSettings());
 		
 		GetCheckbox_ShowDebug().m_OnChanged.Remove(OnCheckboxChanged);
 		GetCheckbox_ShouldSpawnUSPlayerBase().m_OnChanged.Remove(OnCheckboxChanged);
@@ -159,7 +161,7 @@ class TW_SpawnSettingsMenu_Handler : SCR_ScriptedWidgetComponent
 		GetSlider_SpawnDistanceInChunks().m_OnChanged.Remove(OnSliderChanged);
 		GetSlider_SpawnIntervalInSeconds().m_OnChanged.Remove(OnSliderChanged);
 		GetSlider_WanderIntervalInSeconds().m_OnChanged.Remove(OnSliderChanged);
-		GetSlider_AntiSpawnGridSizeInMeters().m_OnChanged.Remove(OnSliderChanged);
+		//GetSlider_AntiSpawnGridSizeInMeters().m_OnChanged.Remove(OnSliderChanged);
 		GetSlider_AntiSpawnDistanceInChunks().m_OnChanged.Remove(OnSliderChanged);
 		GetSlider_GarbageCollectionTimerInSeconds().m_OnChanged.Remove(OnSliderChanged);
 	}

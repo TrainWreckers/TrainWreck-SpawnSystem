@@ -16,7 +16,8 @@ class TW_FactionUnitsMenuHandler : SCR_ScriptedWidgetComponent
 		m_Root = w;
 		_contentArea = m_Root.FindAnyWidget("ContentArea");
 		
-		_factionSpawnSettings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		_factionSpawnSettings = interface.GetFactionSpawnSettings();
 		SetupFactionEnabled();
 		SetupFactionCount();
 		SetupWanderChance();

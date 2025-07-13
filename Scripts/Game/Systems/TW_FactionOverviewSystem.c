@@ -1,90 +1,74 @@
-class TW_FactionOverviewSystem : GameSystem
+typedef TW_SettingsManager<ref TW_SpawnSettingsInterface> SpawnSettingsManager;
+
+class TW_SpawnSettingsInterface : TW_SettingsInterface<SpawnSettingsBase>
 {
-	protected static ref SpawnSettingsBase activeSpawnSettings;
-	protected static ref FactionSpawnSettings activeFactionSpawnSettings; 
-	protected static ref ScriptInvoker<ref FactionSpawnSettings> onFactionSelectionChanged = new ScriptInvoker<ref FactionSpawnSettings>();
-	protected static bool isInitialized = false;
+	private ref SpawnSettingsBase _spawnSettings;
+	private ref FactionSpawnSettings _selectedFactionSettings;
+	private ref ScriptInvoker<ref FactionSpawnSettings> _onFactionSelectionChanged = new ScriptInvoker<ref FactionSpawnSettings>();
 	
-	private static void Initialize()
+	ScriptInvoker<ref FactionSpawnSettings> GetOnFactionSelectionChanged() { return _onFactionSelectionChanged; }
+	
+	override void Initialize(SpawnSettingsBase settings)
 	{
-		Print("TrainWreck: Initialized Faction Overview System");
-		#ifdef WORKBENCH 
-		activeSpawnSettings = SpawnSettingsBase.LoadFromFile();
-		#else
-		if(Replication.IsServer())
-			activeSpawnSettings = TW_SpawnManagerBase.GetInstance().GetSettings();
-		else 
-			activeSpawnSettings = SCR_BaseGameMode.TW_SpawnSettings;
-		#endif
+		if(settings)
+			_spawnSettings = settings;
+		else
+			_spawnSettings = TW_SpawnManagerBase.GetSpawnSettings();
 		
-		if(activeSpawnSettings && activeSpawnSettings.FactionSettings.Count() > 0)
+		if(!_spawnSettings)
 		{
-			activeFactionSpawnSettings = activeSpawnSettings.FactionSettings.Get(0);
+			Print("TrainWreck: TW_SpawnSettingsInterface -> Spawn settings are null", LogLevel.ERROR);
+			return;
+		}
+		
+		if(_selectedFactionSettings != null)
+		{
+			SelectFaction(_selectedFactionSettings.FactionName);
+		}
+		else if(_spawnSettings.FactionSettings.Count() > 0)
+		{
+			_selectedFactionSettings = _spawnSettings.FactionSettings.Get(0);
 		}
 		
 		isInitialized = true;
 	}
 	
-	static void SetSpawnSettings(SpawnSettingsBase settings) 
+	void SelectFaction(string factionKey)
 	{
-		string factionName = string.Empty; 
-		
-		if(GetFactionSpawnSettings() != null)
+		if(!_spawnSettings)
 		{
-			factionName = GetFactionSpawnSettings().FactionName;
-		}
-		
-		activeSpawnSettings = settings; 
-		
-		if(factionName != string.Empty)
-		{
-			SelectFaction(factionName);
-		}
-	}
-	
-	static void SetFactionspawnSettings(FactionSpawnSettings settings) { activeFactionSpawnSettings = settings; }
-	
-	static void SelectFaction(string factionKey)
-	{
-		if(!activeSpawnSettings)
-		{
-			Print("TrainWreck: Unable to select faction. Spawn Settings are null", LogLevel.WARNING);
+			Print("TrainWreck: Unable to select faction. Spawn settings are null", LogLevel.ERROR);
 			return;
 		}
 		
-		foreach(FactionSpawnSettings settings : activeSpawnSettings.FactionSettings)
+		foreach(FactionSpawnSettings settings : _spawnSettings.FactionSettings)
 		{
 			if(settings.FactionName == factionKey)
 			{
-				activeFactionSpawnSettings = settings;
-				onFactionSelectionChanged.Invoke(activeFactionSpawnSettings);
+				_selectedFactionSettings = settings;
+				GetOnFactionSelectionChanged().Invoke(_selectedFactionSettings);
 				return;
 			}
 		}
 		
-		
-		PrintFormat("TrainWreck: Unable to locate faction settings for %1", factionKey);
-		activeFactionSpawnSettings = null;
+		PrintFormat("TrainWreck: TW_SpawnSettingsInterface unable to locate faction '%1'", factionKey, LogLevel.WARNING);
+		_selectedFactionSettings = null;
+		GetOnFactionSelectionChanged().Invoke(null);
 	}
 	
-	static FactionSpawnSettings GetFactionSpawnSettings() { return activeFactionSpawnSettings; }
-	static SpawnSettingsBase GetSpawnSettings() { return activeSpawnSettings; }
+	FactionSpawnSettings GetFactionSpawnSettings() { return _selectedFactionSettings; }
+	SpawnSettingsBase GetSpawnSettings() { return _spawnSettings; }
 	
-	static void SaveSettings()
+	override void SaveSettings()
 	{
 		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
-		player.UpdateFactionSpawnSettings(activeSpawnSettings);
+		player.UpdateFactionSpawnSettings(GetSpawnSettings());
 	}
 	
-	static void ResetToDefault()
+	override void ResetToDefault()
 	{
 		ref SpawnSettingsBase settings = SpawnSettingsBase.GetDefault();
-		SetSpawnSettings(settings);
+		Initialize(settings);
 		SaveSettings();
-	}
-	
-	static void InitSystem()
-	{
-		if(!isInitialized) Initialize();
 	}
 };

@@ -15,7 +15,8 @@ class TW_Settings_Menu: MenuBase
 		
 		if(!rootWidget) return;
 		_contentArea = rootWidget.FindAnyWidget("ContentArea");
-		_settings = TW_FactionOverviewSystem.GetSpawnSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		_settings = interface.GetSpawnSettings();
 		grid = UniformGridLayoutWidget.Cast(_contentArea);
 		
 		saveButton = SCR_InputButtonComponent.Cast(rootWidget.FindAnyWidget("SaveButton").FindHandler(SCR_InputButtonComponent));
@@ -67,14 +68,15 @@ class TW_Settings_Menu: MenuBase
 	{
 		string id = comp.GetId();
 		
-		ref FactionSpawnSettings selectedSettings = TW_FactionOverviewSystem.GetFactionSpawnSettings();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		ref FactionSpawnSettings selectedSettings = interface.GetFactionSpawnSettings();
 		if(!selectedSettings || selectedSettings.FactionName != id)
 		{
 			PrintFormat("TrainWreck: ID selected: %1", id);
-			TW_FactionOverviewSystem.SelectFaction(id);
+			interface.SelectFaction(id);
 		}
 		
-		if(!TW_FactionOverviewSystem.GetFactionSpawnSettings())
+		if(!interface.GetFactionSpawnSettings())
 		{
 			Print("TrainWreck: Faction was not selected", LogLevel.ERROR);
 			return;
@@ -90,7 +92,8 @@ class TW_Settings_Menu: MenuBase
 	
 	private void Reset()
 	{
-		TW_FactionOverviewSystem.ResetToDefault();
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		interface.ResetToDefault();
 		Close();
 	}
 	

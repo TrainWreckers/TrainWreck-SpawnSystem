@@ -115,7 +115,9 @@ class TW_SpawnManagerBase
 		return s_Instance;
 	}
 	
-	protected ref SpawnSettingsBase m_SpawnSettings;
+	static ref SpawnSettingsBase s_SpawnSettings;
+	static SpawnSettingsBase GetSpawnSettings() { return s_SpawnSettings; }
+	
 	protected ref map<string, ref array<SCR_AIGroup>> m_FactionGroups = new map<string, ref array<SCR_AIGroup>>();
 	protected ref map<string, ref array<SCR_ChimeraAIAgent>> m_FactionAgents = new map<string, ref array<SCR_ChimeraAIAgent>>();
 	
@@ -136,28 +138,24 @@ class TW_SpawnManagerBase
 	
 	protected SCR_BaseGameMode m_GameMode;
 	
-	ref SpawnSettingsBase GetSettings() { return m_SpawnSettings; }
 	private bool isTrickleSpawning = false;
 	private int m_SpawnQueueCount = 0;
 	
 	//! Should we render debug statements solely meant to troubleshoot specific problems
 	protected bool IsDebug()
 	{
-		if(!m_SpawnSettings) 
+		if(!s_SpawnSettings) 
 			return false;
 		
-		return m_SpawnSettings.ShowDebug;
+		return s_SpawnSettings.ShowDebug;
 	}
-	
-	private ref set<string> __spawnGridKeys = new set<string>();
-	private ref set<string> __antiGridKeys = new set<string>();
 		
 	protected void OnSettingsChanged(string key)
 	{
 		if(key == "SpawnGridSize")
 		{
-			TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
-			TW_VehicleSpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
+			TW_AISpawnPoint.ChangeSpawnGridSize(s_SpawnSettings.SpawnGridSize);
+			TW_VehicleSpawnPoint.ChangeSpawnGridSize(s_SpawnSettings.SpawnGridSize);
 		}	
 	}
 	
@@ -187,22 +185,22 @@ class TW_SpawnManagerBase
 		m_EnabledFactions.Clear();
 		
 		if(overrideSettings)
-			m_SpawnSettings = overrideSettings;
+			s_SpawnSettings = overrideSettings;
 		else
-			m_SpawnSettings = SpawnSettingsBase.LoadFromFile();
+			s_SpawnSettings = SpawnSettingsBase.LoadFromFile();
 		
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		interface.Initialize(s_SpawnSettings);
 		
-		SCR_BaseGameMode.TW_SpawnSettings = m_SpawnSettings;
-		
-		if(!m_SpawnSettings)
+		if(!s_SpawnSettings)
 		{
 			PrintFormat("TrainWreck-SpawnSystem: Cannot find spawn file", LogLevel.WARNING);
 			return;
 		}
 		
-		m_SpawnSettings.GetOnChanged().Insert(OnSettingsChanged);
+		s_SpawnSettings.GetOnChanged().Insert(OnSettingsChanged);
 		
-		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
+		foreach(FactionSpawnSettings settings : s_SpawnSettings.FactionSettings)
 		{
 			if(m_Spawnables.Contains(settings.FactionName))
 			{
@@ -274,6 +272,8 @@ class TW_SpawnManagerBase
 			{
 				GetGame().GetCallqueue().CallLater(PrintSettings, 30 * 1000, false);
 			}
+			
+			RegisterBackgroundTasks();
 		}
 		
 		FactionManager manager = GetGame().GetFactionManager();
@@ -284,7 +284,7 @@ class TW_SpawnManagerBase
 			return;
 		}
 		
-		foreach(FactionSpawnSettings settings : m_SpawnSettings.FactionSettings)
+		foreach(FactionSpawnSettings settings : s_SpawnSettings.FactionSettings)
 			if(!m_FactionSettings.Contains(settings.FactionName) && settings.IsEnabled)
 			{			
 				if(!manager.GetFactionByKey(settings.FactionName))
@@ -305,7 +305,7 @@ class TW_SpawnManagerBase
 		
 		if(!hasInitialized)
 		{
-			m_GameMode.GetOnPositionMonitorChanged().Insert(OnMonitorChanged);
+			TW_MonitorPositions.GetInstance().GetOnGridSystemChanged().Insert(OnMonitorChanged);
 			hasInitialized = true;
 		}
 	}
@@ -316,6 +316,25 @@ class TW_SpawnManagerBase
 		m_GameMode = gameMode;
 		LoadSettingsFromFile();
 		SpawnPlayerBases();
+		
+		int oldSize = TW_AISpawnPoint.GetGridManager().GetGridSize();
+		
+		if(TW_MonitorPositions.GetInstance().HasGridSystem(oldSize))
+		{
+			ref TW_Grid grid = TW_MonitorPositions.GetInstance().GetGridSystem(oldSize);
+			grid.SetGridRadius(s_SpawnSettings.SpawnDistanceInChunks);
+			grid.SetAntiRadius(s_SpawnSettings.AntiSpawnDistanceInChunks);
+			grid.GetOnPositionsChanged().Insert(OnPlayerChunksUpdated);
+		}
+		else
+		{
+			TW_MonitorPositions.GetInstance().AddGridSystem(s_SpawnSettings.SpawnGridSize, s_SpawnSettings.SpawnDistanceInChunks, s_SpawnSettings.AntiSpawnDistanceInChunks);
+			ref TW_Grid grid = TW_MonitorPositions.GetInstance().GetGridSystem(s_SpawnSettings.SpawnGridSize);
+			grid.GetOnPositionsChanged().Insert(OnPlayerChunksUpdated);
+		}
+		
+		TW_AISpawnPoint.ChangeSpawnGridSize(s_SpawnSettings.SpawnGridSize);
+		TW_VehicleSpawnPoint.ChangeSpawnGridSize(s_SpawnSettings.SpawnGridSize);
 	}
 	
 	private ref TW_RequiredAOIHandler _usPlayerAOI;
@@ -324,7 +343,7 @@ class TW_SpawnManagerBase
 	
 	private void SpawnPlayerBases()
 	{		
-		if(GetSettings().ShouldSpawnUSPlayerBase)
+		if(GetSpawnSettings().ShouldSpawnUSPlayerBase)
 		{
 			_usPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetUSPlayerSpawnAreaConfig());
 			
@@ -334,7 +353,7 @@ class TW_SpawnManagerBase
 				PrintFormat("TrainWreck: Spawn for required AOI failed", LogLevel.ERROR);		
 		}	
 		
-		if(GetSettings().ShouldSpawnUSSRPlayerBase)
+		if(GetSpawnSettings().ShouldSpawnUSSRPlayerBase)
 		{
 			_ussrPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetUSSRPlayerSpawnAreaConfig());
 			
@@ -344,7 +363,7 @@ class TW_SpawnManagerBase
 				PrintFormat("TrainWreck: Spawn for required AOI failed", LogLevel.ERROR);		
 		}
 		
-		if(GetSettings().ShouldSpawnFIAPlayerBase)
+		if(GetSpawnSettings().ShouldSpawnFIAPlayerBase)
 		{
 			_fiaPlayerAOI = new TW_RequiredAOIHandler(m_GameMode.GetFIAPlayerSpawnAreaConfig());	
 			
@@ -358,13 +377,22 @@ class TW_SpawnManagerBase
 	//! Need to make sure the spawn grid matches settings file
 	private void RegisterBackgroundTasks()
 	{	
-		PrintFormat("TrainWreck: TW_SpawnManagerBase -> Background tasks registered");
-		GetGame().GetCallqueue().CallLater(WanderLoop, m_SpawnSettings.WanderIntervalInSeconds * 1000, true);
-		GetGame().GetCallqueue().CallLater(SpawnLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
-		GetGame().GetCallqueue().CallLater(GarbageCollection, m_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
+		ref ScriptCallQueue queue = GetGame().GetCallqueue();
 		
-		if(m_SpawnSettings.VehicleSpawnSettings && m_SpawnSettings.VehicleSpawnSettings.ShouldSpawnVehicles)
-			GetGame().GetCallqueue().CallLater(VehicleLoop, m_SpawnSettings.SpawnTimerInSeconds * 1000, true);
+		// Ensure we don't add duplicates of our functions
+		queue.Remove(WanderLoop);
+		queue.Remove(SpawnLoop);
+		queue.Remove(GarbageCollection);
+		queue.Remove(VehicleLoop);
+		
+		queue.CallLater(WanderLoop, s_SpawnSettings.WanderIntervalInSeconds * 1000, true);
+		queue.CallLater(SpawnLoop, s_SpawnSettings.SpawnTimerInSeconds * 1000, true);
+		queue.CallLater(GarbageCollection, s_SpawnSettings.GarbageCollectionTimerInSeconds * 1000, true);
+		
+		if(s_SpawnSettings.VehicleSpawnSettings && s_SpawnSettings.VehicleSpawnSettings.ShouldSpawnVehicles)
+			queue.CallLater(VehicleLoop, s_SpawnSettings.SpawnTimerInSeconds * 1000, true);
+		
+		PrintFormat("TrainWreck: TW_SpawnManagerBase -> Background tasks registered");
 	}
 	
 	private static ref map<string, TW_VehicleType> _vehicleTypeMap = new map<string, TW_VehicleType>();
@@ -375,7 +403,7 @@ class TW_SpawnManagerBase
 		if(GetGame().GetPlayerManager().GetPlayerCount() <= 0)
 			return;
 		
-		TW_VehicleSpawnPoint.ManageVehicles(m_PlayerChunks, m_SpawnSettings.VehicleSpawnSettings.DeleteIfMoreThanChunksAway);
+		TW_VehicleSpawnPoint.ManageVehicles(m_PlayerChunks, s_SpawnSettings.VehicleSpawnSettings.DeleteIfMoreThanChunksAway);
 		
 		if(m_VehicleSpawnPointsNearPlayers.IsEmpty())
 			return;				
@@ -418,7 +446,7 @@ class TW_SpawnManagerBase
 			ResourceName vehiclePrefab = settings.GetRandomVehicle(randomType);
 			
 			IEntity vehicle;
-			if(!spawnPoint.SpawnVehicle(vehiclePrefab, vehicle, m_SpawnSettings.VehicleSpawnSettings.VehicleChanceToSpawn))
+			if(!spawnPoint.SpawnVehicle(vehiclePrefab, vehicle, s_SpawnSettings.VehicleSpawnSettings.VehicleChanceToSpawn))
 				continue;
 			
 			TW_VehicleSpawnPoint.s_VehicleGrid.RemoveCoord(spawnPoint.GetOrigin());			
@@ -464,12 +492,16 @@ class TW_SpawnManagerBase
 	}
 	
 	
-	private void OnMonitorChanged(TW_MonitorPositions monitor)
+	private void OnMonitorChanged(int oldSize, int newSize, TW_Grid grid)
 	{
 		PrintFormat("TrainWreck: Spawn System - Received new Monitor");
-		m_GameMode.GetOnPlayerPositionsUpdated().Insert(OnPlayerChunksUpdated);
-		TW_AISpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
-		TW_VehicleSpawnPoint.ChangeSpawnGridSize(m_SpawnSettings.SpawnGridSize);
+		grid.GetOnPositionsChanged().Remove(OnPlayerChunksUpdated);
+		grid.GetOnPositionsChanged().Insert(OnPlayerChunksUpdated);
+		
+		TW_AISpawnPoint.ChangeSpawnGridSize(newSize);
+		TW_VehicleSpawnPoint.ChangeSpawnGridSize(newSize);
+		
+		s_SpawnSettings.SpawnGridSize = newSize;
 		
 		RegisterBackgroundTasks();
 	}
@@ -508,7 +540,7 @@ class TW_SpawnManagerBase
 		foreach(AIWaypoint waypoint : waypoints)
 			group.RemoveWaypoint(waypoint);
 		
-		AIWaypoint waypoint = TW_Util.CreateWaypointAt(m_SpawnSettings.DefendWaypointPrefab, point.GetOrigin());				
+		AIWaypoint waypoint = TW_Util.CreateWaypointAt(s_SpawnSettings.DefendWaypointPrefab, point.GetOrigin());				
 		group.AddWaypoint(waypoint);
 	}
 	
@@ -516,7 +548,7 @@ class TW_SpawnManagerBase
 	{
 		if(!spawnPoint || !spawnPoint.IsActive()) return false;
 		
-		string position = TW_Util.ToGridText(spawnPoint.GetOrigin(), m_SpawnSettings.AntiSpawnGridSize);
+		string position = TW_Util.ToGridText(spawnPoint.GetOrigin(), s_SpawnSettings.SpawnGridSize);
 		return !m_AntiSpawnChunks.Contains(position);
 	}
 	
@@ -625,7 +657,7 @@ class TW_SpawnManagerBase
 			bool tag = tagAsWanderer < spawnSettings.AIWanderChance;
 			
 			ref FactionSpawnInfo factionSettings = m_Spawnables.Get(selectedFaction);
-			int groupSize = Math.RandomIntInclusive(1, m_SpawnSettings.GroupSize);
+			int groupSize = Math.RandomIntInclusive(1, s_SpawnSettings.GroupSize);
 			ResourceName characterPrefab = factionSettings.GetRandomCharacter();
 			
 			if(IsDebug())
@@ -678,26 +710,26 @@ class TW_SpawnManagerBase
 			case TW_AISpawnBehavior.Patrol:	
 			{
 				int waypointCount = Math.RandomIntInclusive(5, 15);
-				TW_Util.CreatePatrolPathFor(group, m_SpawnSettings.PatrolWaypointPrefab, m_SpawnSettings.CycleWaypointPrefab, waypointCount, Math.RandomFloat(150, 600));
+				TW_Util.CreatePatrolPathFor(group, s_SpawnSettings.PatrolWaypointPrefab, s_SpawnSettings.CycleWaypointPrefab, waypointCount, Math.RandomFloat(150, 600));
 				break;
 			}
 			
 			case TW_AISpawnBehavior.Attack:
 			{
-				waypoint = m_SpawnSettings.AttackWaypointPrefab;
+				waypoint = s_SpawnSettings.AttackWaypointPrefab;
 				position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
 				break;
 			}
 			
 			case TW_AISpawnBehavior.DefendLocal:
 			{
-				waypoint = m_SpawnSettings.DefendWaypointPrefab;					
+				waypoint = s_SpawnSettings.DefendWaypointPrefab;					
 				break;
 			}
 			
 			case TW_AISpawnBehavior.DefendArea:
 			{
-				waypoint = m_SpawnSettings.DefendWaypointPrefab;
+				waypoint = s_SpawnSettings.DefendWaypointPrefab;
 				position = m_SpawnPointsNearPlayers.GetRandomElement().GetOrigin();
 				break;
 			}
@@ -797,7 +829,7 @@ class TW_SpawnManagerBase
 			if(!agent.IsManagedBySpawnSystem())
 				continue;
 			
-			positionText = TW_Util.ToGridText(agent.GetOrigin(), m_SpawnSettings.SpawnGridSize);
+			positionText = TW_Util.ToGridText(agent.GetOrigin(), s_SpawnSettings.SpawnGridSize);
 			
 			// If the chunk is not loaded --> delete
 			if(!m_PlayerChunks.Contains(positionText))
