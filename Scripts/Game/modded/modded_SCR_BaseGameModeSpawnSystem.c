@@ -8,8 +8,6 @@ modded class SCR_BaseGameMode
 	protected ref TW_AOIConfig _ussrPlayerSpawnArea;
 	protected ref TW_AOIConfig _fiaPlayerSpawnArea;
 	
-	static ref SpawnSettingsBase TW_SpawnSettings;
-	
 	TW_AOIConfig GetUSPlayerSpawnAreaConfig() 
 	{ 
 		if(!_usPlayerSpawnArea)
@@ -68,7 +66,7 @@ modded class SCR_BaseGameMode
 		
 		// We will broadcast the faction settings to people upon joining
 		// Afterwards players should receive updates whenever the settings update
-		Rpc(Rpc_Broadcast_FactionSpawnSettings, TW_Util.ToJson(TW_SpawnSettings, true));
+		Rpc(Rpc_Broadcast_FactionSpawnSettings, TW_Util.ToJson(TW_SpawnManagerBase.GetSpawnSettings(), true));
 	}
 	
 	void UpdateFactionSpawnSettings(SpawnSettingsBase settings)
@@ -86,9 +84,10 @@ modded class SCR_BaseGameMode
 			PrintFormat("TrainWreck: UpdateFactionSpawnSettings<SaveToFile> - Failed. %1", TW_Util.ToJson(settings, true));
 			return;
 		}
-		
+
 		TW_SpawnManagerBase.GetInstance().LoadSettingsFromFile(settings);
-		TW_SpawnSettings = settings;
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		interface.Initialize(settings);
 		
 		string serialized = TW_Util.ToJson(settings, true);
 		Print("TrainWreck: UpdateFactionSpawnSettings -> Broadcasting Updates");
@@ -101,7 +100,9 @@ modded class SCR_BaseGameMode
 	{
 		PrintFormat("TrainWreck: Broadcast Received");
 		SpawnSettingsBase spawnSettings = SpawnSettingsBase.LoadFromFile(settings);
-		TW_SpawnSettings = spawnSettings;
+		TW_SpawnManagerBase.s_SpawnSettings = spawnSettings;
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		interface.Initialize(spawnSettings);
 	}
 	
 	private void InitializeCompositions()
@@ -141,17 +142,6 @@ modded class SCR_BaseGameMode
 			PrintFormat("TrainWreck-SpawnSystem: Was unable to load config: %1", prefab, LogLevel.ERROR);
 		
 		return registry;
-	}
-	
-	protected override void InitializePositionMonitor()
-	{
-	 	if(!Replication.IsServer())
-			return;
-		
-		SpawnSettingsBase settings = m_SpawnManager.GetInstance().GetSettings();
-		
-		positionMonitor = new TW_MonitorPositions(settings.SpawnGridSize, settings.SpawnDistanceInChunks, settings.AntiSpawnGridSize, settings.AntiSpawnDistanceInChunks);
-		m_PositionMonitorUpdateInterval = 2.0;
 	}
 	
 	protected ref TW_SpawnManagerBase m_SpawnManager;

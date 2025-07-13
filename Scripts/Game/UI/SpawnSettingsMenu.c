@@ -8,18 +8,9 @@ class TW_Layout_SpawnSettingsUI : ChimeraMenuBase
 		super.OnMenuOpen();
 		_handler = TW_SpawnSettingsMenu_Handler.Cast(GetRootWidget().FindHandler(TW_SpawnSettingsMenu_Handler));
 		
-		SpawnSettingsBase settings;
+		SpawnSettingsBase settings = TW_SpawnManagerBase.GetSpawnSettings();
 		SCR_BaseGameMode gameMode = SCR_BaseGameMode.Cast(GetGame().GetGameMode());
 		
-		if(TW_Global.IsServer(gameMode))
-		{
-			settings = TW_SpawnManagerBase.GetInstance().GetSettings();
-		}
-		else
-		{
-			settings = SCR_BaseGameMode.TW_SpawnSettings;
-		}
-		
-		_handler.AttachToSpawnSettings(settings);		
+		_handler.AttachToSpawnSettings(settings);	
 	}	
 };

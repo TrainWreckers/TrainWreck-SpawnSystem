@@ -16,7 +16,7 @@ modded class SCR_PlayerController
 		// We'll want to update locally and send update to server
 		else
 		{
-			SCR_BaseGameMode.TW_SpawnSettings = settings;
+			TW_SpawnManagerBase.s_SpawnSettings = settings;
 			Rpc(Rpc_Server_OnFactionSettingsChanged, TW_Util.ToJson(settings, true));
 		}
 	}

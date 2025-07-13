@@ -50,24 +50,9 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 			SCR_InputButtonComponent  resetButton = SCR_InputButtonComponent .Cast(reset.FindHandler(SCR_InputButtonComponent ));
 			resetButton.m_OnClicked.Insert(Reset);
 		}
-	}
-	
-	void NavigateLeft()
-	{
-		Widget child = m_ContentArea.GetChildren();
-		if(!child) return;
 		
-		Widget sub = child.GetChildren();
-		
-		GetGame().GetWorkspace().SetFocusedWidget(sub);
-	}
-	
-	void NavigateRight()
-	{
-		Widget child = m_SettingsArea.GetChildren();
-		
-		if(!child) return;
-		GetGame().GetWorkspace().SetFocusedWidget(child);
+		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
+		settings = interface.GetSpawnSettings();
 	}
 	
 	void Reset()
@@ -75,7 +60,6 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		settings = SpawnSettingsBase.GetDefault();
 		SCR_PlayerController player = SCR_PlayerController.Cast(GetGame().GetPlayerController());
 		player.UpdateFactionSpawnSettings(settings);
-		Initialize(settings);
 	}
 	
 	void SaveAll()
@@ -86,130 +70,6 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		
 		if(m_OnSaved)
 			m_OnSaved.Invoke();
-	}
-	
-	private void SetupFactionEnabled()
-	{
-		Widget layout = GetGame().GetWorkspace().CreateWidgets(s_CheckboxLayout, m_SettingsArea);
-		
-		SCR_CheckboxComponent checkbox = SCR_CheckboxComponent.Cast(layout.FindHandler(SCR_CheckboxComponent));
-		
-		checkbox.SetLabel("Enabled");
-		checkbox.m_OnChanged.Insert(OnFactionEnabledChange);
-		checkbox.SetChecked(factionSpawnSettings.IsEnabled);
-	}
-	
-	private void SetupFactionCount()
-	{
-		Widget layout = GetGame().GetWorkspace().CreateWidgets(s_SliderLayout, m_SettingsArea);
-		
-		SCR_SliderComponent slider = SCR_SliderComponent.Cast(layout.FindHandler(SCR_SliderComponent));
-		
-		slider.SetLabel("Amount to Spawn");
-		slider.SetFormatText("%1");
-		
-		slider.SetMax(100);
-		slider.SetStep(1);
-		slider.SetMin(0);
-		slider.SetValue(factionSpawnSettings.MaxAmount);
-		
-		slider.m_OnChanged.Insert(OnFactionCountChanged);
-	}
-	
-	private void OnFactionCountChanged(SCR_SliderComponent comp, float value)
-	{
-		if(!factionSpawnSettings)
-		{
-			Print("TrainWreck: Unable to update faction count... no ref to settings", LogLevel.WARNING);
-			return;
-		}
-			
-		factionSpawnSettings.MaxAmount = (int)value;
-	}
-	
-	private void OnFactionEnabledChange(SCR_CheckboxComponent comp, bool value)
-	{
-		if(!factionSpawnSettings)
-		{
-			Print("TrainWreck: Unable to update faction enablement... no ref to settings", LogLevel.WARNING);
-			return;
-		}
-		factionSpawnSettings.IsEnabled = value;
-	}
-	
-	void Initialize(SpawnSettingsBase settings)
-	{
-		this.settings = settings;
-		
-		ClearSettingsPane();
-		Widget child = m_ContentArea.GetChildren();
-		
-		while(child)
-		{
-			m_ContentArea.RemoveChild(child);
-			child = m_ContentArea.GetChildren();
-		}
-		
-		foreach(FactionSpawnSettings factionSettings : settings.FactionSettings)
-		{
-			Widget factionWidget =  GetGame().GetWorkspace().CreateWidgets(s_FactionSettingsLayout);
-			m_ContentArea.AddChild(factionWidget);
-			
-			TW_FactionSettings_MenuHandler handler = TW_FactionSettings_MenuHandler.Cast(factionWidget.FindHandler(TW_FactionSettings_MenuHandler));
-			
-			handler.Initialize(settings, factionSettings);
-			handler.GetFactionButtonWidget().m_OnClicked.Insert(OnFactionButtonClicked);
-		}
-	}
-	
-	void OnFactionButtonClicked(SCR_ButtonImageComponent comp)
-	{
-		string id = comp.GetId();
-		
-		if(id == m_SelectedFactionId) return;
-		ClearSettingsPane();
-		
-		FactionSpawnSettings faction = SelectFaction(id);
-		
-		if(!faction || !faction.Characters) return;
-		
-		SetupFactionEnabled();
-		SetupFactionCount();
-		
-		foreach(PrefabItemChance chance : faction.Characters)
-		{
-			Widget chanceWidget = GetGame().GetWorkspace().CreateWidgets(s_ItemChanceLayout);
-			m_SettingsArea.AddChild(chanceWidget);
-			
-			TW_ItemChance_MenuHandler handler = TW_ItemChance_MenuHandler.Cast(chanceWidget.FindHandler(TW_ItemChance_MenuHandler));
-			handler.LinkTo(chance);
-		}
-		
-	}
-	
-	private ref FactionSpawnSettings SelectFaction(string id)
-	{
-		m_SelectedFactionId = id;
-		
-		foreach(FactionSpawnSettings factionSettings : settings.FactionSettings)
-		{
-			if(factionSettings.FactionName != id) continue;
-			factionSpawnSettings = factionSettings;
-			return factionSettings;
-		}
-		
-		return null;
-	}
-	
-	private void ClearSettingsPane()
-	{
-		Widget child = m_SettingsArea.GetChildren();
-		
-		while(child)
-		{
-			m_SettingsArea.RemoveChild(child);
-			child = m_SettingsArea.GetChildren();
-		}
 	}
 	
 	void AttachToSpawnSettings(SpawnSettingsBase settings)

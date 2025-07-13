@@ -33,7 +33,6 @@ class TW_FactionSettings_MenuHandler : SCR_ScriptedWidgetComponent
 		return factionManager;
 	}
 	
-	
 	void Initialize(SpawnSettingsBase settings, FactionSpawnSettings spawnSettings)
 	{
 		_factionSpawnSettings = spawnSettings;

@@ -1,3 +1,18 @@
+class TW_ItemChanceInfo
+{
+	ResourceName Icon;
+	string Name;
+	
+	void TW_ItemChanceInfo(string name, ResourceName icon)
+	{
+		Icon = icon;
+		Name = name;
+	}
+	
+	string GetName() { return Name; }
+	ResourceName GetIcon() { return Icon; }
+}
+
 class TW_ItemChance_MenuHandler : SCR_ScriptedWidgetComponent
 {
 	const string s_ItemSlider = "ItemSlider";
@@ -14,6 +29,48 @@ class TW_ItemChance_MenuHandler : SCR_ScriptedWidgetComponent
 		m_Root = w;
 	}
 	
+	override void HandlerDeattached(Widget w)
+	{
+		if(!GetSlider()) return;
+		
+		GetSlider().m_OnChanged.Clear();
+	}
+	
+	private ref TW_ItemChanceInfo GetInfo()
+	{
+		ref SCR_EditableEntityUIInfo info = TW_Util.GetCharacterUIInfo(_item.PrefabName);
+		
+		ResourceName iconInfo = ResourceName.Empty;
+		string name = string.Empty;
+		
+		if(info)
+		{
+			if(info.GetImage())
+				iconInfo = info.GetImage();
+			else if(info.GetIconPath())
+				iconInfo = info.GetIconPath();
+			
+			name = info.GetName();
+		}
+		else 
+		{
+			ref SCR_EditableVehicleUIInfo vehicleInfo = TW_Util.GetVehicleUIInfo(_item.PrefabName);
+		
+			if(vehicleInfo)
+			{
+				if(vehicleInfo.GetImage())
+					iconInfo = vehicleInfo.GetImage();
+				else if(vehicleInfo.GetIconPath())
+					iconInfo = vehicleInfo.GetIconPath();
+				
+				name = vehicleInfo.GetName();
+			}	
+		}
+		
+		
+		return TW_ItemChanceInfo(name, iconInfo);
+	}
+	
 	void LinkTo(PrefabItemChance item)
 	{
 		if(!Resource.Load(item.PrefabName).IsValid())
@@ -24,11 +81,19 @@ class TW_ItemChance_MenuHandler : SCR_ScriptedWidgetComponent
 		GetSlider().m_OnChanged.Insert(OnSliderChanged);
 		GetSlider().SetValue(item.Chance);
 	
-		ref SCR_EditableEntityUIInfo info = TW_Util.GetCharacterUIInfo(item.PrefabName);
+		ref TW_ItemChanceInfo itemInfo = GetInfo();
 		
-		if(!info) 
+		if(!itemInfo.Icon) 
 		{
 			GetImageWidget().SetVisible(false);
+		}
+		else
+		{
+			GetImageWidget().LoadImageTexture(0, itemInfo.Icon);
+		}
+		
+		if(!itemInfo.Name)
+		{
 			ref array<string> parts = {};
 			item.PrefabName.Split("/", parts, false);
 			
@@ -36,16 +101,11 @@ class TW_ItemChance_MenuHandler : SCR_ScriptedWidgetComponent
 			last.Replace(".et", "");
 			
 			GetNameWidget().SetText(last);
-			return;
 		}
-		
-		if(info.GetImage())
-			GetImageWidget().LoadImageTexture(0, info.GetImage());
-		else if(info.GetIconPath())
-			GetImageWidget().LoadImageTexture(0, info.GetIconPath());
-		else GetImageWidget().SetVisible(false);
-		
-		GetNameWidget().SetText(info.GetName());
+		else
+		{
+			GetNameWidget().SetText(itemInfo.Name);
+		}
 	}
 	
 	private void OnSliderChanged(SCR_SliderComponent comp, float value)

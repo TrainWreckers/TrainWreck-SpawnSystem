@@ -1,9 +1,5 @@
 FrameWidgetClass {
  Name "rootFrame"
- components {
-  TW_FactionSpawnSettings_MenuHandler "{65ACC2EE26150E44}" {
-  }
- }
  {
   HorizontalLayoutWidgetClass "{64CE308603DFF692}" {
    Name "Window"
@@ -148,36 +144,15 @@ FrameWidgetClass {
              Image ""
              Size 128 2
             }
-            HorizontalLayoutWidgetClass "{65AE224A8F992549}" {
-             Name "HorizontalLayout0"
-             Slot LayoutSlot "{65AE224A8F99256A}" {
+            ScrollLayoutWidgetClass "{65ACC2FD0C0800B5}" {
+             Name "ScrollLayout0"
+             Slot LayoutSlot "{65CCA1FF1F386D8D}" {
               SizeMode Fill
              }
              {
-              ScrollLayoutWidgetClass "{65ACC2FD0C0800B5}" {
-               Name "ScrollLayout0"
-               Slot LayoutSlot "{65ACC2FD0C0800D5}" {
-                SizeMode Fill
-               }
-               {
-                VerticalLayoutWidgetClass "{64D56D008744D05D}" {
-                 Name "ContentArea"
-                 Slot AlignableSlot "{65AE224AFB84F56C}" {
-                 }
-                }
-               }
-              }
-              ScrollLayoutWidgetClass "{65AE224AE01791AF}" {
-               Name "ScrollLayout1"
-               Slot LayoutSlot "{65AE224AE01791CE}" {
-                SizeMode Fill
-               }
-               {
-                VerticalLayoutWidgetClass "{65AE224AE878206B}" {
-                 Name "SettingsPane"
-                 Slot AlignableSlot "{65AE224AE8782083}" {
-                 }
-                }
+              UniformGridLayoutWidgetClass "{65CCA1FFA950BCF1}" {
+               Name "ContentArea"
+               Slot AlignableSlot "{65CCA1FF908EAD1A}" {
                }
               }
              }

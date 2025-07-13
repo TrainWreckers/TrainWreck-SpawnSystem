@@ -1,0 +1,204 @@
+FrameWidgetClass {
+ Name "FactionOverviewRoot"
+ components {
+  TW_FactionOverviewMenuHandler "{65CAF75A596687CC}" {
+  }
+ }
+ {
+  HorizontalLayoutWidgetClass "{65CACDE4A01BFB06}" {
+   Name "Window"
+   Slot FrameWidgetSlot "{56EEDE05AD6DF1E2}" {
+    Anchor 0 0 1 1
+    PositionX -1.099
+    PositionY 0
+    OffsetTop 0
+    SizeX 0
+    OffsetRight 0
+    SizeY 0
+    OffsetBottom 0
+   }
+   {
+    OverlayWidgetClass "{65CACDE4A01BFB01}" {
+     Name "Content"
+     Slot LayoutSlot "{56EEDE05BFED5D35}" {
+      SizeMode Fill
+     }
+     {
+      ImageWidgetClass "{65CACDE4A01BFB00}" {
+       Name "Background"
+       Slot OverlayWidgetSlot "{56EEDE05C871C02C}" {
+        HorizontalAlign 3
+        VerticalAlign 3
+       }
+       Opacity 0.5
+       Color 0 0 0 1
+      }
+      BlurWidgetClass "{65CACDE4A01BFB02}" {
+       Name "Blur"
+       Slot OverlayWidgetSlot "{56EEDE05D754F42B}" {
+        HorizontalAlign 3
+        VerticalAlign 3
+       }
+       Color 0.305 0.305 0.305 1
+       Intensity 0.7
+      }
+      ImageWidgetClass "{65CACDE4A01B2185}" {
+       Name "Stripe"
+       Slot OverlayWidgetSlot "{56EEDE05C871C02C}" {
+        HorizontalAlign 3
+        VerticalAlign 0
+       }
+       Color 0.761 0.392 0.08 1
+       components {
+        SCR_SetModeColorEditorUIComponent "{56FB36E8579C2A5F}" {
+         m_bUpdateOnModeChanged 1
+        }
+       }
+       Size 4 4
+      }
+      HorizontalLayoutWidgetClass "{65CACDE4A01B218B}" {
+       Name "SpaceLayout"
+       Slot OverlayWidgetSlot "{5720DE53ABB7CBED}" {
+        Padding 0 72 0 72
+       }
+       {
+        FrameWidgetClass "{65CACDE4A018A95C}" {
+         Name "SpaceLeft"
+         Slot LayoutSlot "{5720ECBBBD66ED2B}" {
+          SizeMode Fill
+          FillWeight 0.025
+         }
+        }
+        SizeLayoutWidgetClass "{65CACDE4A018A95F}" {
+         Name "Alignment"
+         Slot LayoutSlot "{5720DE53A848E0CC}" {
+          SizeMode Fill
+         }
+         AllowWidthOverride 1
+         WidthOverride 1344
+         AllowHeightOverride 1
+         HeightOverride 936
+         {
+          VerticalLayoutWidgetClass "{65CACDE4A018E77F}" {
+           Name "ContentLayout"
+           Slot AlignableSlot "{56EEDE0403BED8AE}" {
+            HorizontalAlign 3
+            VerticalAlign 3
+           }
+           "Fill Origin" Center
+           {
+            HorizontalLayoutWidgetClass "{65CACDE4A018E77E}" {
+             Name "HorizontalLayout1"
+             Slot LayoutSlot "{65AEA9AD8A392B2A}" {
+             }
+             {
+              TextWidgetClass "{65CACDE4A018E778}" : "{9D643D214767D616}UI/layouts/WidgetLibrary/TextWidgets/Text_Heading2.layout" {
+               Name "FactionTitle"
+               Slot LayoutSlot "{56EEDE046853BD3D}" {
+                Padding 0 0 0 12
+               }
+               Text "Faction Overview"
+              }
+              HorizontalLayoutWidgetClass "{65CACDE4A018E23C}" {
+               Name "HorizontalLayout0"
+               Slot LayoutSlot "{65AEA9AE1104DC94}" {
+                SizeMode Fill
+               }
+              }
+              ButtonWidgetClass "{65CACDE4A018E23E}" : "{0114A06AD44D49BD}UI/layouts/WidgetLibrary/Buttons/DialogButtonCancel.layout" {
+               Name "SaveButton"
+               Slot LayoutSlot "{5CC2F7A314C9440B}" {
+                HorizontalAlign 1
+               }
+               components {
+                SCR_InputButtonComponent "{5D346C3DD81D95CD}" {
+                 m_sLabel "Save & Exit"
+                }
+               }
+              }
+             }
+            }
+            ImageWidgetClass "{65CACDE4A018E224}" {
+             Name "UpperStripe"
+             Slot LayoutSlot "{56EEDE07C9F827C2}" {
+              Padding 0 0 0 12
+             }
+             Color 0.761 0.392 0.08 1
+             Image ""
+             Size 128 2
+            }
+            VerticalLayoutWidgetClass "{65CACDE4E3A57C79}" {
+             Name "VerticalLayout0"
+             Slot LayoutSlot "{65CACDE4E3A57C19}" {
+              SizeMode Fill
+             }
+             {
+              VerticalLayoutWidgetClass "{65CACDE489FD5CAD}" : "{A971263DAE3AD8BC}UI/layouts/WidgetLibrary/TabView/WLib_TabViewHorizontal.layout" {
+               Name "Tabs"
+               Slot LayoutSlot "{65CACDE489FD5C43}" {
+                HorizontalAlign 1
+               }
+               components {
+                SCR_TabViewComponent "{546B27D01CA8A38D}" {
+                 m_aElements {
+                  SCR_TabViewContent "{65CACDE4D6AFB155}" {
+                   m_ElementLayout "{627A7643C11CD5E3}UI/layouts/FactionSettings/FactionCharacters.layout"
+                   m_sTabButtonContent "Units"
+                   m_sTabIdentifier "Units"
+                   m_TabImage "{C3901A809DA9FD4A}UI/Textures/Editor/ContentBrowser/ContentBrowser_Type_Character.edds"
+                   m_bShowImage 1
+                  }
+                  SCR_TabViewContent "{65CACDE4D7632674}" {
+                   m_ElementLayout "{9ABBBDECB5240C3F}UI/layouts/FactionSettings/FactionBehaviors.layout"
+                   m_sTabButtonContent "Behaviors"
+                   m_sTabIdentifier "Behaviors"
+                   m_TabImage "{D76F2FCC977ECD46}UI/Textures/Editor/ContentBrowser/ContentBrowser_Type_Task.edds"
+                   m_bShowImage 1
+                  }
+                  SCR_TabViewContent "{65CACDE4D7E0AC39}" {
+                   m_ElementLayout "{1B5FFBBF7FF64FEF}UI/layouts/FactionSettings/FactionVehicles.layout"
+                   m_sTabButtonContent "Vehicles"
+                   m_sTabIdentifier "Vehicles"
+                   m_TabImage "{9D08285F22911CFC}UI/Textures/Editor/ContentBrowser/ContentBrowser_Type_Vehicle.edds"
+                   m_bShowImage 1
+                  }
+                 }
+                }
+               }
+               {
+                SizeLayoutWidgetClass "{0000000041B59A6F}" {
+                 Prefab "{0000000041B59A6F}"
+                 Slot LayoutSlot "{54872533ECCEDDB0}" {
+                 }
+                }
+               }
+              }
+             }
+            }
+            ImageWidgetClass "{65CACDE4A01870C2}" {
+             Name "LowerStripe"
+             Slot LayoutSlot "{56EEDE06187FACF9}" {
+              Padding 0 12 0 24
+             }
+             Opacity 0.1
+             Size 2 2
+            }
+           }
+          }
+         }
+        }
+        FrameWidgetClass "{65CACDE4A01870C3}" {
+         Name "SpaceRight"
+         Slot LayoutSlot "{5720ECBBBD66ED2B}" {
+          SizeMode Fill
+          FillWeight 0.025
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

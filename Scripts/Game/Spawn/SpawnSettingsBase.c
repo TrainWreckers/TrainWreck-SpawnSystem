@@ -62,9 +62,6 @@ class SpawnSettingsBase
 	//! Radius in chunks around player that is considered off limits for AI to spawn
 	int AntiSpawnDistanceInChunks;
 	
-	//! Anti Spawn Grid Size
-	int AntiSpawnGridSize;
-	
 	//! Time in seconds. Interval GC is checked
 	float GarbageCollectionTimerInSeconds;
 	
@@ -113,6 +110,34 @@ class SpawnSettingsBase
 		SetDirty();
 	}
 	
+	void SetVehicleSpawn(bool value)
+	{
+		VehicleSpawnSettings.ShouldSpawnVehicles = value;
+		m_OnChanged.Invoke("ShouldSpawnVehicles");
+		SetDirty();
+	}
+	
+	void SetVehicleMax(int max)
+	{
+		VehicleSpawnSettings.MaxVehicles = max;
+		m_OnChanged.Invoke("MaxVehicles");
+		SetDirty();
+	}
+	
+	void SetVehicleSpawnChance(float chance)
+	{
+		VehicleSpawnSettings.VehicleChanceToSpawn = chance;
+		m_OnChanged.Invoke("VehicleChanceToSpawn");
+		SetDirty();
+	}
+	
+	void SetVehicleTypeChance(string type, float chance)
+	{
+		VehicleSpawnSettings.VehicleTypeChances.Set(type, chance);
+		m_OnChanged.Invoke("VehicleSpawnChance");
+		SetDirty();
+	}
+	
 	void SetWanderIntervalInSeconds(int value)
 	{
 		WanderIntervalInSeconds = value;
@@ -133,15 +158,6 @@ class SpawnSettingsBase
 		m_OnChanged.Invoke("GarbageCollectionTimerInSeconds");
 		SetDirty();
 	}
-	
-	
-	void SetAntiSpawnGridSize(int value)
-	{
-		AntiSpawnGridSize = value;
-		m_OnChanged.Invoke("AntiSpawnGridSize");
-		SetDirty();
-	}
-	
 	
 	void SetAntiSpawnDistanceInChunks(int value)
 	{
@@ -208,7 +224,6 @@ class SpawnSettingsBase
 				 int gridSize,
 				 int gridRadius,
 				 int antiGridRadius,
-				 int antiGridSize,
 				 float gcTimer,
 				 int groupSize)
 	{
@@ -217,7 +232,6 @@ class SpawnSettingsBase
 		SpawnDistanceInChunks = gridRadius;
 		SpawnGridSize = gridSize;
 		AntiSpawnDistanceInChunks = antiGridRadius;
-		AntiSpawnGridSize = antiGridSize;
 		GarbageCollectionTimerInSeconds = gcTimer;
 		WanderIntervalInSeconds = 60;
 		FactionSettings = {};
@@ -361,7 +375,7 @@ class SpawnSettingsBase
 		PrintFormat("TrainWreck: SpawnSettingsBase -> Loading Default Settings", LogLevel.WARNING);
 		ref SpawnSettingsBase settings = new SpawnSettingsBase();
 		
-		settings.SetData("default", 2, 250, 3, 2, 150, 5.0, 3);
+		settings.SetData("default", 2, 250, 3, 2, 5.0, 3);
 		
 		settings.CycleWaypointPrefab = "{35BD6541CBB8AC08}Prefabs/AI/Waypoints/AIWaypoint_Cycle.et";
 		settings.PatrolWaypointPrefab = "{22A875E30470BD4F}Prefabs/AI/Waypoints/AIWaypoint_Patrol.et";
