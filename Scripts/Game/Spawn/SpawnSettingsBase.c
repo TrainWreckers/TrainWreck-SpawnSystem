@@ -23,6 +23,12 @@ class TW_VehicleSpawnSettings
 	//! Should vehicles (using vehicle spawn points) be enabled
 	bool ShouldSpawnVehicles = false;
 	
+	/*!
+		When a vehicle spawn point is considered - regardless of outcome, 
+		should the spawn point be removed?
+	*/
+	bool DeleteSpawnPointAfterCheck = true;
+	
 	//! Maximum amount of vehicles 
 	int MaxVehicles = 10;
 	float VehicleChanceToSpawn = 0.2;
@@ -31,6 +37,15 @@ class TW_VehicleSpawnSettings
 	//! The chances for each vehicle type to spawn around the map
 	ref map<string, float> VehicleTypeChances;
 };
+
+void OnSettingsChanged(string name);
+void OnSettingsIntChanged(string name, int oldValue, int newValue);
+
+typedef func OnSettingsChangedDelegate;
+typedef func OnSettingsIntChangedDelegate;
+
+typedef ScriptInvoker<OnSettingsChangedDelegate> TW_OnSettingsChangedInvoker;
+typedef ScriptInvoker<OnSettingsIntChangedDelegate> TW_OnSettingsIntChangedInvoker;
 
 class SpawnSettingsBase
 {
@@ -58,6 +73,9 @@ class SpawnSettingsBase
 	
 	//! Grid Size
 	int SpawnGridSize;
+	
+	//! Size of Anti Spawn Grid
+	int AntiSpawnGridSize;
 	
 	//! Radius in chunks around player that is considered off limits for AI to spawn
 	int AntiSpawnDistanceInChunks;
@@ -161,24 +179,44 @@ class SpawnSettingsBase
 	
 	void SetAntiSpawnDistanceInChunks(int value)
 	{
+		if(AntiSpawnDistanceInChunks == value)
+			return;
+		int old = AntiSpawnDistanceInChunks;
 		AntiSpawnDistanceInChunks = value;
-		m_OnChanged.Invoke("AntiSpawnDistanceInChunks");
+		GetOnIntChanged().Invoke("AntiSpawnDistanceInChunks", old, value);
 		SetDirty();
 	}
 	
 	
 	void SetSpawnGridSize(int value)
 	{
+		if(value == SpawnGridSize)
+			return;
+		int old = SpawnGridSize;
 		SpawnGridSize = value;
-		m_OnChanged.Invoke("SpawnGridSize");
+		GetOnIntChanged().Invoke("SpawnGridSize", old, value);
+		SetDirty();
+	}
+	
+	void SetAntiSpawnGridSize(int value)
+	{
+		if(value == AntiSpawnGridSize)
+			return;
+		
+		int old = AntiSpawnGridSize;
+		AntiSpawnGridSize = value;
+		GetOnIntChanged().Invoke("AntiSpawnGridSize", old, value);
 		SetDirty();
 	}
 	
 	
 	void SetSpawnDistanceInChunks(int value)
 	{
+		if(SpawnDistanceInChunks == value)
+			return;
+		int old = SpawnDistanceInChunks;
 		SpawnDistanceInChunks = value;
-		m_OnChanged.Invoke("SpawnDistanceInChunks");
+		GetOnIntChanged().Invoke("SpawnDistanceInChunks", old, value);
 		SetDirty();
 	}
 	
@@ -216,8 +254,18 @@ class SpawnSettingsBase
 	ref array<ref FactionSpawnSettings> FactionSettings;		
 	
 	[NonSerialized()]
-	private ref ScriptInvoker<string> m_OnChanged = new ScriptInvoker();
-	ScriptInvoker<string> GetOnChanged() { return m_OnChanged; }
+	private ref TW_OnSettingsChangedInvoker m_OnChanged = new TW_OnSettingsChangedInvoker();
+	TW_OnSettingsChangedInvoker GetOnChanged() { return m_OnChanged; }
+	
+	[NonSerialized()]
+	private ref TW_OnSettingsIntChangedInvoker m_OnIntChanged = new TW_OnSettingsIntChangedInvoker();
+	TW_OnSettingsIntChangedInvoker GetOnIntChanged() { return m_OnIntChanged; }
+	
+	void TW_SpawnSettingsBase()
+	{
+		m_OnIntChanged = new TW_OnSettingsIntChangedInvoker();
+		m_OnChanged = new TW_OnSettingsChangedInvoker();
+	}
 	
 	void SetData(string type,
 				 int spawnTimer,
@@ -236,6 +284,7 @@ class SpawnSettingsBase
 		WanderIntervalInSeconds = 60;
 		FactionSettings = {};
 		GroupSize = groupSize;
+		AntiSpawnGridSize = 150;
 	}
 	
 	void AddFaction(FactionSpawnSettings settings)
@@ -456,7 +505,9 @@ class SpawnSettingsBase
 		if(!loadContext.ReadValue("", settings))
 		{
 			PrintFormat("TrainWreck: SpawnSettingsBase -> Loading settings failed", LogLevel.ERROR);
-			return null;
+			settings = GetDefault();
+			SpawnSettingsBase.SaveToFile(settings);
+			return settings;
 		}
 		
 		return settings;

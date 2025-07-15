@@ -129,7 +129,7 @@ class TW_SpawnSettings_SetAntiSpawnDistanceInChunksAttribute : SCR_BaseValueList
 	}
 }
 
-/*
+
 [BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
 class TW_SpawnSettings_SetAntiSpawnGridSizeAttribute : SCR_BaseValueListEditorAttribute
 {
@@ -148,7 +148,7 @@ class TW_SpawnSettings_SetAntiSpawnGridSizeAttribute : SCR_BaseValueListEditorAt
 		if(!settings) return;
 		settings.SetAntiSpawnGridSize(var.GetInt());
 	}
-}*/
+}
 
 [BaseContainerProps(), SCR_BaseEditorAttributeCustomTitle()]
 class TW_SpawnSettings_SetGarbageCollectionTimerAttribute : SCR_BaseValueListEditorAttribute
