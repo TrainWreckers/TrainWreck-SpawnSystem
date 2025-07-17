@@ -245,7 +245,7 @@ class SpawnSettingsBase
 	
 	private void SetDirty()
 	{
-		if(IsDirty) false;
+		if(IsDirty) return;
 		IsDirty = true;
 		GetGame().GetCallqueue().CallLater(Save, 1000);
 	}
