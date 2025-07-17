@@ -613,7 +613,7 @@ class TW_SpawnManagerBase
 	
 	protected bool IsValidSpawn(TW_AISpawnPoint spawnPoint)
 	{
-		if(!spawnPoint || !spawnPoint.IsActive()) return false;
+		if(!spawnPoint || !spawnPoint.CanSpawn()) return false;
 		
 		string position = TW_Util.ToGridText(spawnPoint.GetOrigin(), s_SpawnSettings.AntiSpawnGridSize);
 		return !m_AntiSpawnChunks.Contains(position);
