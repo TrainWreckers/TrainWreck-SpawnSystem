@@ -99,11 +99,12 @@ modded class SCR_BaseGameMode
 	private void Rpc_Broadcast_FactionSpawnSettings(string settings)
 	{
 		PrintFormat("TrainWreck: Broadcast Received");
-		SpawnSettingsBase spawnSettings = SpawnSettingsBase.LoadFromFile(settings);
+		ref SpawnSettingsBase spawnSettings = SpawnSettingsBase.LoadFromFile(settings);
 		TW_SpawnManagerBase.s_SpawnSettings = spawnSettings;
 		ref TW_SpawnSettingsInterface interface = SpawnSettingsManager.GetInstance().GetInterface();
 		interface.Initialize(spawnSettings);
 	}
+	
 	
 	private void InitializeCompositions()
 	{

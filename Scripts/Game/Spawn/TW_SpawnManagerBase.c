@@ -548,7 +548,8 @@ class TW_SpawnManagerBase
 	
 	private void OnRadiusGridSizeChanged(int oldSize, int newSize)
 	{
-		PrintFormat("TrainWreck: SpawnManager -> Updating grid from %1 to %2", oldSize, newSize);
+		if(IsDebug())
+			PrintFormat("TrainWreck: SpawnManager -> Updating grid from %1 to %2", oldSize, newSize);
 		ref TW_OnPlayerPositionsChangedInvoker invoker = TW_MonitorPositions.GetInstance().RemoveGridSubscription(SpawnManagerRadius, oldSize, GetSpawnSettings().SpawnDistanceInChunks);
 		
 		if(invoker)
@@ -561,7 +562,8 @@ class TW_SpawnManagerBase
 	
 	private void OnAntiRadiusGridSizeChanged(int oldSize, int newSize)
 	{
-		PrintFormat("TrainWreck: SpawnManager -> Updating AntiRadius grid from %1 to %2", oldSize, newSize);
+		if(IsDebug())
+			PrintFormat("TrainWreck: SpawnManager -> Updating AntiRadius grid from %1 to %2", oldSize, newSize);
 		
 		ref TW_OnPlayerPositionsChangedInvoker invoker = TW_MonitorPositions.GetInstance().RemoveGridSubscription(SpawnManagerAntiRadius, oldSize, GetSpawnSettings().AntiSpawnDistanceInChunks);
 		if(invoker)
@@ -694,7 +696,10 @@ class TW_SpawnManagerBase
 			return;
 		}
 		
-		TW_AISpawnPoint spawnPoint = m_SpawnPointsNearPlayers.GetRandomElement();
+		int count = m_SpawnPointsNearPlayers.Count();
+		int index = Math.RandomInt(0, count);
+		
+		TW_AISpawnPoint spawnPoint = m_SpawnPointsNearPlayers.Get(index);
 		
 		ResourceName waypointOverride = ResourceName.Empty;
 		IEntity positionOverride = null;
@@ -821,6 +826,9 @@ class TW_SpawnManagerBase
 		
 		int before = m_SpawnPointsNearPlayers.Count();
 		
+		if(IsDebug())
+			PrintFormat("TrainWreck: %1 Spawn Points (%2), Unloaded (%3)", before, gridEvent.GetPlayerChunks().Count(), gridEvent.GetUnloadedChunks().Count());
+		
 		m_SpawnPointsNearPlayers.Clear();
 		m_VehicleSpawnPointsNearPlayers.Clear();
 		
@@ -828,9 +836,7 @@ class TW_SpawnManagerBase
 		TW_VehicleSpawnPointGrid.GetInstance().GetSpawnPointsInChunks(m_PlayerChunks, m_VehicleSpawnPointsNearPlayers);
 		
 		if(IsDebug())
-		{
 			PrintFormat("TrainWreck: Updating player chunks. Count Before (%1) -> After (%2)", before, m_SpawnPointsNearPlayers.Count());
-		}
 	}
 	
 	protected void OnPlayerChunksUpdatedAntiRadius(GridUpdateEvent gridEvent)

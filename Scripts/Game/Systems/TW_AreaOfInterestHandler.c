@@ -1,3 +1,4 @@
+//! Intended for generating areas of interest
 class TW_CompositionSpawnParameters
 {
 	int SmallCompositions;
