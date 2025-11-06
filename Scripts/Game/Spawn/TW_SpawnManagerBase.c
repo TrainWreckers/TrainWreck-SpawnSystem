@@ -319,7 +319,9 @@ class TW_SpawnManagerBase
 			
 			foreach(VehicleItemChance item : settings.Vehicles)
 			{
-				TW_Util.GetEntitySize(item.PrefabName);
+				// Disabling this until an alternative is found
+				// Luckily doesn't appear to be used anywhere... for now
+				// TW_Util.GetEntitySize(item.PrefabName);
 				spawnInfo.AddVehicle(item);
 			}
 			
