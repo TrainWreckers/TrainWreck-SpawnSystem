@@ -739,7 +739,8 @@ class TW_SpawnManagerBase
 				PrintFormat("TrainWreck: Tag(%1), GroupSize(%2), Prefab(%3), Faction(%4)", tag, groupSize, characterPrefab, selectedFaction);
 			}
 			
-			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, characterPrefab, groupSize);
+			// Skipping waypoint assignment (default is defend local) so that we leverage the weighted system
+			SCR_AIGroup group = TW_Util.CreateNewGroup(spawnPoint, selectedFaction, characterPrefab, groupSize, true);
 			
 			if(!group)
 			{
@@ -812,7 +813,7 @@ class TW_SpawnManagerBase
 		if(waypoint)
 		{
 			AIWaypoint point = TW_Util.CreateWaypointAt(waypoint, position);
-			group.AddWaypoint(point);
+			group.AddWaypoint(point);			
 		}
 		
 		if(!m_FactionCounts.Contains(selectedFaction))
