@@ -115,10 +115,10 @@ class TW_SpawnSettingsMenu_Handler : SCR_ScriptedWidgetComponent
 		}
 	}
 	
-	void AttachToSpawnSettings(SpawnSettingsBase settings)
+	void AttachToSpawnSettings(SpawnSettingsBase _settings)
 	{
 		if(!GetGame().InPlayMode()) return;
-		this.settings = settings;
+		this.settings = _settings;
 		GetCheckbox_ShowDebug().m_OnChanged.Insert(OnCheckboxChanged);
 		GetCheckbox_ShouldSpawnUSPlayerBase().m_OnChanged.Insert(OnCheckboxChanged);
 		GetCheckbox_ShouldSpawnUSSRPlayerBase().m_OnChanged.Insert(OnCheckboxChanged);

@@ -72,10 +72,10 @@ class TW_FactionSpawnSettings_MenuHandler : SCR_ScriptedWidgetComponent
 			m_OnSaved.Invoke();
 	}
 	
-	void AttachToSpawnSettings(SpawnSettingsBase settings)
+	void AttachToSpawnSettings(SpawnSettingsBase _settings)
 	{
 		if(!GetGame().InPlayMode()) return;
-		this.settings = settings;
+		this.settings = _settings;
 	}
 	
 };
